@@ -13,11 +13,10 @@ from utils.training import print_epoch,save_checkpoint
 from utils.metrics import get_classifcation,nearest_error,save_metrics
 from model_config import *
 
-optimizer = tf.keras.optimizers.Adam()#1e-5)
+optimizer = tf.keras.optimizers.Adam()
 
 def l2_loss(x,x_hat):
     return cross_entropy(x,x_hat)
-    #return tf.reduce_mean(tf.square(tf.subtract(x, x_hat)))
 
 @tf.function
 def train_step(model, x):

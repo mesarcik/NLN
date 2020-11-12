@@ -7,11 +7,6 @@ from reporting import plot_results
 from architectures import *  
 
 def main():
-    if cmd_input.args.data == 'HERA':
-        data  = load_hera(limit=cmd_input.args.limit,
-                           anomaly=cmd_input.args.anomaly_class,
-                           percentage_anomaly =cmd_input.args.percentage_anomaly)
-
     elif cmd_input.args.data == 'MNIST':
         data  = load_mnist(limit=cmd_input.args.limit,
                            anomaly=cmd_input.args.anomaly_class,
@@ -43,13 +38,9 @@ def main():
     train_vae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
     train_aae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
 
-    #cmd_input.args.epochs = 15
     #train_gpnd(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
     #train_vaegan(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
     #train_bigan(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
-
-    #plot_results()
-
 
 if __name__ == '__main__':
     main()

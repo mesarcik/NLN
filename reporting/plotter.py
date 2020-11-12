@@ -8,12 +8,6 @@ def plot_results():
     x = list(pd.unique(df.Class))
     model_types  = list(pd.unique(df.Model))
 
-    # TODO Remove this 
-    #model_types.remove('AE')
-    #model_types.remove('VAE')
-    #model_types.remove('GANomaly')
-    #model_types.remove('GPND')
-
     colours=cm.rainbow(np.linspace(0,1,len(model_types)))
 
     fig, ax= plt.subplots(1,1,figsize=(13,7))
@@ -65,11 +59,6 @@ def plot_per_model():
     model_types  = list(pd.unique(df.Model))
     latent_dims = list(pd.unique(df.Latent_Dim))
 
-    # TODO Remove this 
-    #model_types.remove('AE')
-    #model_types.remove('VAE')
-    #model_types.remove('GANomaly')
-    #model_types.remove('GPND')
 
     colours=cm.rainbow(np.linspace(0,1,len(latent_dims)))
 

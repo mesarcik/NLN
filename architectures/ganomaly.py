@@ -17,7 +17,6 @@ discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
 encoder_optimizer = tf.keras.optimizers.Adam(1e-4)
 
 def ae_loss(x,x_hat,loss_weight):
-    #return cross_entropy(x, x_hat)
     return loss_weight*tf.reduce_mean(tf.math.abs(tf.subtract(x, x_hat)))
 
 def discriminator_loss(real_output, fake_output,loss_weight):

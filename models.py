@@ -1,13 +1,13 @@
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras import layers
-from model_config import input_shape,n_layers,n_filters
+from model_config import n_layers,n_filters
 tf.keras.backend.set_floatx('float32')
 
 class Encoder(tf.keras.layers.Layer):
     def __init__(self,args):
         super(Encoder, self).__init__()
-        self.input_layer = layers.InputLayer(input_shape=input_shape)
+        self.input_layer = layers.InputLayer(input_shape=args.input_shape)
         self.conv, self.pool, self.batchnorm = [],[],[]
         self.latent_dim  = args.latent_dim
 
@@ -53,11 +53,11 @@ class Decoder(tf.keras.layers.Layer):
         super(Decoder, self).__init__()
         self.latent_dim = args.latent_dim
         self.input_layer = layers.InputLayer(input_shape=[self.latent_dim,])
-        self.dense= layers.Dense(input_shape[0]//2**(n_layers-1) *
-                                 input_shape[1]//2**(n_layers-1) *
+        self.dense= layers.Dense(args.input_shape[0]//2**(n_layers-1) *
+                                 args.input_shape[1]//2**(n_layers-1) *
                                  n_filters,activation='relu')
-        self.reshape = layers.Reshape((input_shape[0]//2**(n_layers-1),
-                                       input_shape[1]//2**(n_layers-1),
+        self.reshape = layers.Reshape((args.input_shape[0]//2**(n_layers-1),
+                                       args.input_shape[1]//2**(n_layers-1),
                                        n_filters))
 
         self.conv, self.pool, self.batchnorm = [],[],[]
@@ -72,7 +72,7 @@ class Decoder(tf.keras.layers.Layer):
             self.pool.append(layers.UpSampling2D(size=(2,2)))
             self.batchnorm.append(layers.BatchNormalization())
 
-        self.conv_output = layers.Conv2DTranspose(filters = input_shape[-1], 
+        self.conv_output = layers.Conv2DTranspose(filters = args.input_shape[-1], 
                                            kernel_size = (2,2), 
                                            padding = 'same',
                                            activation='sigmoid')

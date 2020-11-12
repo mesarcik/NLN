@@ -12,8 +12,6 @@ from matplotlib.cbook import get_sample_data
 import matplotlib.cm as cm
 
 import sys
-sys.path.insert(1,'/home/mmesarcik/phd/Workspace/lofar-dev/')
-from DL4DI.preprocessor import preprocessor 
 
 def plot_overlay(autoencoder, data):
     """
@@ -29,13 +27,9 @@ def plot_overlay(autoencoder, data):
     embeddings =  autoencoder.encoder(data)
     x_hat = autoencoder(data).numpy()
 
-    p = preprocessor(data)
-    p.interp(20,20)
-    _data = p.get_processed_cube()
+    _data = data
 
-    p = preprocessor(x_hat)
-    p.interp(20,20)
-    _x_hat = p.get_processed_cube()
+    _x_hat = x_hat
 
     fig,ax = plt.subplots(1,2,figsize=(15,10));
 
@@ -54,7 +48,6 @@ def plot_overlay(autoencoder, data):
     ax[1].grid();
     plt.suptitle('Scatter Plot of Embedding with Images Overlayed');
     plt.savefig('/tmp/em_temp.png',dpi=600)
-    #return plt
 
 def plot_knn_neighbours(model,data,labels,nnbour=5):
     #TODO expand this to other models

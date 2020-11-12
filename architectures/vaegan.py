@@ -37,7 +37,6 @@ def gan_loss(real_output,fake_output, loss_weight):
     return  loss_weight * (real_loss + fake_loss )
 
 def ae_loss(x,x_hat,loss_weight):
-    #return tf.reduce_mean(tf.square(tf.subtract(x, x_hat)))
      return loss_weight*cross_entropy(tf.keras.backend.flatten(x),tf.keras.backend.flatten(x_hat))
 
 def generator_loss(fake_output, loss_weight):

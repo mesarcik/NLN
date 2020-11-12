@@ -28,6 +28,11 @@ parser.add_argument('-data', metavar='-d', type=str, default='MNIST',
 args = parser.parse_args()
 args.model_name = new_name()
 
+if args.data == 'MNIST' or args.data == 'FASHION_MNIST':
+    args.input_shape =(28,28,1)
+elif args.data == 'CIFAR10'
+    args.input_shape =(32,32,3)
+
 if args.limit == 'None':
     args.limit = None
 else: 
