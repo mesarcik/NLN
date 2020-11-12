@@ -127,3 +127,15 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Folders
+Diagrams/Diagrams/PlotNeuralNet
+.DS_Store
+Workspace/lofar-dev/depreciated/
+Workspace/lofar-dev/wandb/
+Workspace/lofar-dev/myenv/
+Workspace/lofar-dev/outputs/
+Workspace/lofar-dev/vae_cnn/
+Workspace/lofar-dev/anomaly_detection/outputs/
+
+
