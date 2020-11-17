@@ -1,12 +1,9 @@
 #!/bin/sh
-
-# Note -u is used to get an unbuffered output from python
-# and unbuffer -p tee is used to get an unbuffered output to the screen and file
-echo "Logging for experiment.sh on Time: $(date)." >> log.log
+echo "Logging for run_fmnist.sh at time: $(date)." >> log.log
 
 limit=None #16384
 epochs=25 #<- note i am training for more epochs now. It was previously 15 
-j=0.0
+percentage=0.0
 
 for i in $(seq 0 9)
 	do
@@ -14,12 +11,12 @@ for i in $(seq 0 9)
 		do
 				python -u main.py -limit $limit \
 							      -anomaly_class $i \
-							      -percentage_anomaly $j \
+							      -percentage_anomaly $percentage \
 							      -epochs $epochs \
 							      -latent_dim $ld \
-							      -data MNIST\
+							      -data FASHION_MNIST\
 							      -neighbors 1 2 4 5 10 100 \
 							      -radius 1 2 5 10 20 100 \
-							      -algorithm radius | unbuffer -p tee -a log.log 
+							      -algorithm radius | tee -a fmnist.log 
 		done
 done

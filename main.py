@@ -7,7 +7,7 @@ from reporting import plot_results
 from architectures import *  
 
 def main():
-    elif cmd_input.args.data == 'MNIST':
+    if cmd_input.args.data == 'MNIST':
         data  = load_mnist(limit=cmd_input.args.limit,
                            anomaly=cmd_input.args.anomaly_class,
                            percentage_anomaly =cmd_input.args.percentage_anomaly)
@@ -37,10 +37,6 @@ def main():
     train_ae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
     train_vae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
     train_aae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
-
-    #train_gpnd(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
-    #train_vaegan(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
-    #train_bigan(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
 
 if __name__ == '__main__':
     main()

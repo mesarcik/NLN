@@ -3,7 +3,7 @@ import numpy as np
 import pickle
 import random
 import sys
-from model_config import BUFFER_SIZE,BATCH_SIZE,input_shape
+from model_config import BUFFER_SIZE,BATCH_SIZE
 from sklearn.model_selection import train_test_split
 
 
@@ -27,9 +27,9 @@ def load_mnist(limit = None,anomaly=None,percentage_anomaly=0):
         test_images  = test_images[:limit,...]
         test_labels  = test_labels[:limit,...] 
 
-    train_images = train_images.reshape(train_images.shape[0], 28, 28, 1)
+    train_images = train_images.reshape(train_images.shape[0], 28, 28, 1).astype(np.float32)
 
-    test_images = test_images.reshape(test_images.shape[0], 28, 28, 1)
+    test_images = test_images.reshape(test_images.shape[0], 28, 28, 1).astype(np.float32)
 
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
     return (train_dataset,train_images, train_labels, test_images, test_labels)
@@ -54,9 +54,9 @@ def load_fashion_mnist(limit = None,anomaly=None,percentage_anomaly=0):
         test_images  = test_images[:limit,...]
         test_labels  = test_labels[:limit,...] 
 
-    train_images = train_images.reshape(train_images.shape[0], 28, 28, 1)
+    train_images = train_images.reshape(train_images.shape[0], 28, 28, 1).astype(np.float32)
 
-    test_images = test_images.reshape(test_images.shape[0], 28, 28, 1)
+    test_images = test_images.reshape(test_images.shape[0], 28, 28, 1).astype(np.float32)
 
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
     return (train_dataset,train_images, train_labels, test_images, test_labels)
@@ -82,12 +82,10 @@ def load_cifar10(limit = None,anomaly=None,percentage_anomaly=0):
         test_images  = test_images[:limit,...]
         test_labels  = test_labels[:limit,...] 
 
-    train_images = train_images.reshape(train_images.shape[0], 32, 32, 3)
+    train_images = train_images.reshape(train_images.shape[0], 32, 32, 3).astype(np.float32)
 
-    test_images = test_images.reshape(test_images.shape[0], 32, 32, 3)
+    test_images = test_images.reshape(test_images.shape[0], 32, 32, 3).astype(np.float32)
 
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
     return (train_dataset,train_images, train_labels, test_images, test_labels)
-
-
 
