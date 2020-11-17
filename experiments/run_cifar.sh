@@ -1,8 +1,8 @@
 #!/bin/sh
 echo "Logging for run_cifar.sh at time: $(date)." >> log.log
 
-limit=None #16384
-epochs=25 #<- note i am training for more epochs now. It was previously 15 
+limit=None 
+epochs=25 
 percentage=0.0
 
 for i in $(seq 0 9)
