@@ -20,3 +20,5 @@ for i in $(seq 0 9)
 							      -algorithm radius | tee -a cifar.log 
 		done
 done
+
+python report.py -data CIFAR10

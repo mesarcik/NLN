@@ -20,3 +20,5 @@ for i in $(seq 0 9)
 							      -algorithm radius | tee -a mnist.log 
 		done
 done
+
+python report.py -data MNIST

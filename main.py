@@ -3,7 +3,6 @@ import tensorflow as tf
 import sys
 from data import *
 from utils import cmd_input 
-from reporting import plot_results
 from architectures import *  
 
 def main():
@@ -37,6 +36,7 @@ def main():
     train_ae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
     train_vae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
     train_aae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
+
 
 if __name__ == '__main__':
     main()
