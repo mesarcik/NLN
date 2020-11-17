@@ -189,7 +189,6 @@ def get_reconstructed(name,model,test_images):
         model_output = model[0](test_images)
 
     elif name == 'VAE':
-        N = 2# number of samples - determine which number to use (?)
         z_mean, z_logvar  = model.encoder(test_images,vae=True)
         z = model.reparameterize(z_mean, z_logvar)
         model_output = model.decoder(z)

@@ -20,7 +20,6 @@ generator_optimizer = tf.keras.optimizers.Adam(1e-5)
 
 def ae_loss(x,x_hat):
     return cross_entropy(x,x_hat)
-    #return tf.reduce_mean(tf.square(tf.subtract(x, x_hat)))
 
 def discriminator_loss(real_output, fake_output,loss_weight):
     real_loss =  cross_entropy(tf.ones_like(real_output), real_output)
