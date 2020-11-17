@@ -26,7 +26,7 @@ Run the following to replicate the results for MNIST, CIFAR-10 and Fashion-MNIST
 
 
 ## Training 
-Run the following given the correctly generated training files
+Run the following: 
 ```
     python main.py -anomaly_class <0,1,2,3,4,5,6,7,8,9> \
                    -percentage_anomaly <float> \
@@ -37,6 +37,11 @@ Run the following given the correctly generated training files
                    -neighbors <int(s)> \
                    -radius <float(s)> \
                    -algorithm <knn,radius>    
+```
+## Reporting Results 
+Run the following given the correctly generated results files:
+```
+    python report.py -data <MNIST,CIFAR10,FASHION_MNIST>
 ```
 
 ## Licensing
