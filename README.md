@@ -34,8 +34,8 @@ Run the following given the correctly generated training files
                    -epochs <int> \
                    -latent_dim <int> \
                    -data <MNIST,FASHION_MNIST,CIFAR10> \
-                   -neighbors <int> \
-                   -radius <int> \
+                   -neighbors <int(s)> \
+                   -radius <float(s)> \
                    -algorithm <knn,radius>    
 ```
 
