@@ -20,3 +20,5 @@ for i in $(seq 0 9)
 							      -algorithm radius | tee -a fmnist.log 
 		done
 done
+
+python report.py -data FASHION_MNIST

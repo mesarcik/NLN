@@ -46,6 +46,7 @@ def get_classifcation(model_type,
 
 def save_metrics(model_type,
                  name,
+                 dataset,
                  anomaly,
                  auc_reconstruction, 
                  f1_reconstruction,
@@ -56,7 +57,7 @@ def save_metrics(model_type,
     
     if isnan(radius): radius = 'nan'
 
-    if not os.path.exists('outputs/results.csv'):
+    if not os.path.exists('outputs/results_{}.csv'.format(dataset)):
         df = pd.DataFrame(columns = ['Model',
                                      'Name',
                                      'Latent_Dim',
@@ -68,7 +69,7 @@ def save_metrics(model_type,
                                      'F1_Reconstruction_Error',
                                      'F1_Latent_Error'])
     else:  
-        df = pd.read_csv('outputs/results.csv')
+        df = pd.read_csv('outputs/results_{}.csv'.format(dataset))
 
 
     df = df.append({'Model':model_type,
@@ -83,4 +84,4 @@ def save_metrics(model_type,
                     'F1_Latent_Error':f1_latent},
                      ignore_index=True)
 
-    df.to_csv('outputs/results.csv',index=False)
+    df.to_csv('outputs/results_{}.csv'.format(dataset),index=False)

@@ -158,7 +158,6 @@ def plot_max():
 
 def plot_max_avg():
     df = pd.read_csv('outputs/results.csv')
-    #df_agg = df.groupby(['Model','Latent_Dim','Neighbour']).agg({'AUC_Reconstruction_Error': 'mean', 'AUC_Latent_Error':'mean'}).reset_index()
     df_agg = df.groupby(['Model','Radius','Latent_Dim','Neighbour']).agg({'AUC_Reconstruction_Error': 'mean', 'AUC_Latent_Error':'mean'}).reset_index()
     fig0,ax = plt.subplots(1,1,figsize=(13,7))
     
@@ -190,7 +189,6 @@ def plot_max_avg():
         plt.plot(temp['Class'],
                  temp['AUC_Latent_Error'],
                  '--',
-                 #label='Latent Error for latent space of {}  with {} Neighbour'.format(temp_latent.Latent_Dim,temp_latent.Neighbour))
                  label='Latent Error for latent space of {} and Radius of {} with {} Neighbour'.format(temp_latent.Latent_Dim,temp_latent.Radius,temp_latent.Neighbour))
 
 
