@@ -29,7 +29,7 @@ Run the following to replicate the results for MNIST, CIFAR-10 and Fashion-MNIST
 Run the following given the correctly generated training files
 ```
     python main.py -anomaly_class <0,1,2,3,4,5,6,7,8,9> \
-                   -percentage_anomaly <float between 0 and 1> \
+                   -percentage_anomaly <float> \
                    -limit <int> \
                    -epochs <int> \
                    -latent_dim <int> \
