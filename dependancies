@@ -1,7 +1,7 @@
 numpy 
 tensorflow==2.1.0
 tensorflow_datasets
-sklearn
+scikit-learn==0.23.2
 pandas
 matplotlib
 pywavelets
