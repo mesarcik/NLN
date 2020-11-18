@@ -18,7 +18,7 @@ Install dependancies by running:
 
 Additionally for training on a GPU run:
 ``` 
-    conda install -c anaconda tensorflow-gpu
+    conda install -c anaconda tensorflow-gpu=2.1.0
 ``` 
 
 
