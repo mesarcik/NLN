@@ -16,6 +16,12 @@ Install dependancies by running:
     pip install -r dependancies
 ``` 
 
+Additionally for training on a GPU run:
+``` 
+    conda install -c anaconda tensorflow-gpu
+``` 
+
+
 ## Replication of results in paper 
 Run the following to replicate the results for MNIST, CIFAR-10 and Fashion-MNIST respectively
 ```
