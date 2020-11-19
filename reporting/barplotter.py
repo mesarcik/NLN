@@ -125,7 +125,7 @@ def barplot(dataset,legend=True):
     if dataset == 'MNIST' :
         ticks = mnist_ticks
         xlabel = 'MNIST Classes'
-    elif dataset == 'FMNIST':
+    elif dataset == 'FASHION_MNIST':
         ticks = fmnist_ticks
         xlabel = 'FMNIST Classes'
     elif dataset == 'CIFAR10':
