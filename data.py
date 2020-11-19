@@ -2,9 +2,11 @@ import tensorflow as tf
 import numpy as np
 import pickle
 import random
+import copy
 import sys
 from model_config import BUFFER_SIZE,BATCH_SIZE
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler 
 
 
 def load_mnist(limit = None,anomaly=None,percentage_anomaly=0):
@@ -27,9 +29,9 @@ def load_mnist(limit = None,anomaly=None,percentage_anomaly=0):
         test_images  = test_images[:limit,...]
         test_labels  = test_labels[:limit,...] 
 
-    train_images = train_images.reshape(train_images.shape[0], 28, 28, 1).astype(np.float32)
+    train_images = process(train_images.reshape(train_images.shape[0], 28, 28, 1))
 
-    test_images = test_images.reshape(test_images.shape[0], 28, 28, 1).astype(np.float32)
+    test_images = process(test_images.reshape(test_images.shape[0], 28, 28, 1))
 
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
     return (train_dataset,train_images, train_labels, test_images, test_labels)
@@ -54,9 +56,9 @@ def load_fashion_mnist(limit = None,anomaly=None,percentage_anomaly=0):
         test_images  = test_images[:limit,...]
         test_labels  = test_labels[:limit,...] 
 
-    train_images = train_images.reshape(train_images.shape[0], 28, 28, 1).astype(np.float32)
+    train_images = process(train_images.reshape(train_images.shape[0], 28, 28, 1))
 
-    test_images = test_images.reshape(test_images.shape[0], 28, 28, 1).astype(np.float32)
+    test_images = process(test_images.reshape(test_images.shape[0], 28, 28, 1))
 
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
     return (train_dataset,train_images, train_labels, test_images, test_labels)
@@ -82,10 +84,18 @@ def load_cifar10(limit = None,anomaly=None,percentage_anomaly=0):
         test_images  = test_images[:limit,...]
         test_labels  = test_labels[:limit,...] 
 
-    train_images = train_images.reshape(train_images.shape[0], 32, 32, 3).astype(np.float32)
-
-    test_images = test_images.reshape(test_images.shape[0], 32, 32, 3).astype(np.float32)
+    train_images = process(train_images.reshape(train_images.shape[0], 32, 32, 3))
+    test_images = process(test_images.reshape(test_images.shape[0], 32, 32, 3))
 
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
     return (train_dataset,train_images, train_labels, test_images, test_labels)
+
+def process(data):
+    output = copy.deepcopy(data).astype('float32')
+    for i,image in enumerate(data):
+        x,y,z = image.shape
+        output[i,...] = MinMaxScaler(feature_range=(0,1)
+                                      ).fit_transform(image.reshape([x*y,z])).reshape([x,y,z])
+    return output
+
 
