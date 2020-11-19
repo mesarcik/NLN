@@ -2,6 +2,15 @@ import os
 import tensorflow as tf
 
 def save_checkpoint(model,epoch,args, model_type, model_subtype):
+    """
+        Saves model weights at given checkpoint 
+
+        model (tf.keras.Model): the model 
+        epoch (int): current epoch of training
+        args (Namespace): the arguments from cmd_args
+        model_type (str): the type of model (AE,VAE,...)
+        model_subtype (str): the part of the model (ae, disc,...) 
+    """
     dir_path = 'outputs/{}/{}/{}'.format(model_type,
                                           args.anomaly_class,
                                           args.model_name)

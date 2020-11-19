@@ -7,6 +7,9 @@ import warnings
 warnings.filterwarnings('ignore')
 
 def add_df_parameters(dataset):
+    """
+        Repeated from barplotter 
+    """
     df = pd.read_csv('outputs/results_{}.csv'.format(dataset))
     index = 0
     data = []
@@ -29,6 +32,12 @@ def add_df_parameters(dataset):
     return df_new
 
 def heatmap(dataset='MNIST',legend=True):
+    """
+        Creates heatmaps for K and r as shown in paper
+
+        dataset (str): Name of the dataset 
+        legend (bool): show the legend?
+    """
     print('Dataset = {}\n'.format(dataset))
     df = add_df_parameters(dataset)
 

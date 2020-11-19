@@ -1,63 +1,16 @@
 from models import *
 import tensorflow as tf
 
-def get_model(name = 'AE',anomaly = None):
-    if name == 'AE':
-        model = Autoencoder()
-        model.load_weights('outputs/AE/{}/training_checkpoints/checkpoint_ae'.format(anomaly))
-    elif name == 'AAE':
-        model = Autoencoder()
-        model.load_weights('outputs/AAE/{}/training_checkpoints/checkpoint_ae'.format(anomaly))
-    elif name == 'VAE':
-        model = VAE()
-        model.load_weights('outputs/VAE/{}/training_checkpoints/checkpoint_ae'.format(anomaly))
-
-    elif name == 'DAE' :
-        ae = Autoencoder()
-        disc= Discriminator_x()
-        ae.load_weights('outputs/DAE/{}/training_checkpoints/checkpoint_ae'.format(anomaly))
-        disc.load_weights('outputs/DAE/{}/training_checkpoints/checkpoint_disc'.format(anomaly))
-        model = [ae,disc]
-
-    elif name == 'DAE_disc':
-        ae = Autoencoder()
-        disc= Discriminator_x()
-        ae.load_weights('outputs/DAE_disc/{}/training_checkpoints/checkpoint_ae'.format(anomaly))
-        disc.load_weights('outputs/DAE_disc/{}/training_checkpoints/checkpoint_disc'.
-                                                                                format(anomaly))
-        model = [ae,disc]
-
-    elif name == 'GANomaly':
-        ae = Autoencoder()
-        disc= Discriminator_x()
-        encoder = tf.keras.Sequential(Encoder())
-        ae.load_weights('outputs/GANomaly/{}/training_checkpoints/checkpoint_ae'.
-                                                                                format(anomaly))
-        disc.load_weights('outputs/GANomaly/{}/training_checkpoints/checkpoint_disc'.
-                                                                                format(anomaly))
-        encoder.load_weights('outputs/GANomaly/{}/training_checkpoints/checkpoint_encoder'.
-                                                                                format(anomaly))
-
-        model = [ae,disc,encoder]
-
-    elif name == 'GANomaly_disc':
-        ae = Autoencoder()
-        disc= Discriminator_x()
-        encoder = tf.keras.Sequential(Encoder())
-        ae.load_weights('outputs/GANomaly_disc/{}/training_checkpoints/checkpoint_ae'.
-                                                                                format(anomaly))
-        disc.load_weights('outputs/GANomaly_disc/{}/training_checkpoints/checkpoint_disc'.
-                                                                                format( anomaly))
-
-        encoder.load_weights('outputs/GANomaly_disc/{}/training_checkpoints/checkpoint_encoder'.
-                                                                                format(anomaly))
-
-        model = [ae,disc,encoder]
-
-
-    return model 
-
 def get_error(name,model,test_images,return_z=False):
+    """
+        Gets the reconstruciton error of a given model 
+
+        name (str) model name
+        model (tf.keras.Model) the model used to compute the reconstrucion error
+        test_images (np.array) the test images to compute the error with
+        return_z (boolean) return the latent vector 
+    """
+
     if name == 'AE':
         model_output = model(test_images)
         z = model.encoder(test_images)
@@ -128,6 +81,14 @@ def get_error(name,model,test_images,return_z=False):
         return error 
 
 def get_reconstructed(name,model,test_images):
+    """
+       Gets reconstructions of a model 
+
+        name (str) model name
+        model (tf.keras.Model) the model used to compute the reconstrucion error
+        test_images (np.array) the test images to compute the error with
+    """
+
     if name == 'AE':
         model_output = model(test_images)
 

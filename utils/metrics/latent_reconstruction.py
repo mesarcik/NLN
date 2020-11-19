@@ -5,7 +5,7 @@ from time import time
 import copy
 import pickle
 from sklearn import metrics,neighbors
-from model_loader import get_model, get_error
+from model_loader import get_error
 from joblib import Parallel, delayed
 import itertools
 import warnings
@@ -15,7 +15,16 @@ warnings.filterwarnings('ignore')
 def get_sparse_errors(images,train_images, model,z,neighbours_idx,model_type,max_neigh):
     """
         This is different to the get_error function in model loader as it calculates ...
-        the error of a single input based on all the decoded neighbours in z
+        the error of a single input based on all the decoded neighbours in z. 
+        It works for the NLN algorithm with a changing number of neighbours.
+
+        images (np.array): testing images
+        train_images (np.array): images from training set 
+        model (tf.keras.Model): the model used
+        z (np.array): the embedding of the training set  
+        neighbours_idx (np.array): the indexes of the neighbours of each point
+        model_type (str): the type of model (AE,VAE,...)
+        max_neigh (int): the maximum number of neightbours (K) if frNN
     """
     #TODO All of these methods are super inefficient
     error = []
@@ -88,34 +97,17 @@ def get_sparse_errors(images,train_images, model,z,neighbours_idx,model_type,max
     error = np.array(error)
     return error
 
-def get_padded_output(neighbours_idx,decoded,max_neigh):
-    """
-        Takes in the neighbours list and returns the associated padding tuple for np.pad 
-        This is done in order to make the np.array square
-    """
-    # note this function is depreciated
-    padded_output = [] 
-
-    for i,n in enumerate(neighbours_idx):
-        if len(n) ==0: temp = np.array([i])
-        elif len(n) > max_neigh: temp  = n[:max_neigh] 
-        else: temp  = n
-
-        npad = ((0,max_neigh- len(temp)),(0,0),(0,0),(0,0))
-        # if there are no neighbours, then replace with the orignal porint
-        padded_output.append(np.pad(decoded[temp],
-                             pad_width=npad,
-                             mode='constant',
-                             constant_values=(np.nan,)))
-        
-
-    return np.array(padded_output)
-
 
 def get_n_errors(images, model,z,neighbours_idx,model_type,max_neigh=None):
     """
-        This is different to the get_error function in model loader as it calculates ...
-        the error of a single input based on all the decoded neighbours in z
+        Gets the error for the KNN enabled NLN 
+
+        images (np.array): testing images
+        model (tf.keras.Model): the model used
+        z (np.array): the embedding of the training set  
+        neighbours_idx (np.array): the indexes of the neighbours of each point
+        model_type (str): the type of model (AE,VAE,...)
+        max_neigh (int): the maximum number of neightbours (K) if KNN 
     """
     if max_neigh is None:
         max_neigh =  max([sublist.shape[0] for sublist in neighbours_idx])
@@ -156,6 +148,18 @@ def nearest_error(model,
                  model_type,
                  args,
                  hera):
+    """
+        Calculated the NLN error for either frNN and KNN
+
+        model (tf.keras.Model): the model used
+        train_images (np.array): images from training set 
+        test_images (np.array): testing images
+        test_labels (np.array): labels of testing images
+        model_type (str): the type of model (AE,VAE,...)
+        args (Namespace): the argumenets from cmd_args
+        hera (bool): if we use HERA
+
+    """
 
     # inefficent, only need z
     z_query,error_query = get_error(model_type,model,test_images,return_z = True)
@@ -216,6 +220,11 @@ def nearest_error(model,
     return max_auc,max_f1,max_neighbours,max_radius
 
 def get_max_score(args):
+    """
+        Find the maximum AUROC score for the model 
+
+        args (Namespace): arguments from cmd_args
+    """
     (error,test_labels,anomaly,hera,n_bours,
            radius,n_bour,rad,max_auc,max_f1,
            max_neighbours,max_radius,
