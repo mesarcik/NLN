@@ -7,6 +7,11 @@ import warnings
 warnings.filterwarnings('ignore')
 
 def add_df_parameters(dataset):
+    """
+        Adds the missing parameters to the results.csv file 
+
+        dataset (str)  name of the preexisting dataset
+    """
     df = pd.read_csv('outputs/results_{}.csv'.format(dataset))
     index = 0
     data = []
@@ -29,6 +34,11 @@ def add_df_parameters(dataset):
     return df_new
 
 def barplot(dataset,legend=True):
+    """
+        Creates a single barplot for a given dataset 
+
+        dataset (str) name of dataset  
+    """
     print('Dataset = {}\n'.format(dataset))
     df = add_df_parameters(dataset)
 
@@ -77,13 +87,6 @@ def barplot(dataset,legend=True):
 
             recon.append(df_max['AUC_Reconstruction_Error'].values[0])
 
-        #print('For Model {} with ld {} with Rad {} and Neighbour {}\
-        #            \nRecon \t {}\nLatent \t {}'.format(model,
-        #                                                ld,
-        #                                                neigh,
-        #                                                rad,
-        #                                                recon,
-        #                                                latent))
 
         print('Model {} \nMean Reconstruction error {} \nMean Latent Error {}\nPercetange Increase {}\n'.format(model,np.mean(recon), np.mean(latent), round(1-np.mean(recon)/np.mean(latent),4)))
         print('Latent Dim: {}'.format(ld))
@@ -144,6 +147,9 @@ def barplot(dataset,legend=True):
     plt.show()
 
 def barplot_shared():
+    """
+        Creates shared barplot for MNIST and CIFAR 
+    """
     fig,axs = plt.subplots(1,2,figsize=(14,4))
 
  

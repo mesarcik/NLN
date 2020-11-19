@@ -1,4 +1,3 @@
-# Misha Mesarcik 2020
 import numpy as np 
 import tensorflow as tf
 import sys

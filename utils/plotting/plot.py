@@ -7,6 +7,15 @@ import numpy as np
 import pandas as pd
 
 def generate_and_save_training(losses, legend,name,args): #ae_loss,d_loss,e_loss):
+    """
+        Shows line plot of of the training curves
+
+        losses (list): list of losses 
+        legend (list): name of each loss
+        name (str): model name
+        args (Namespace): arguments from cmd_args
+
+    """
     epochs = [e for e in range(len(losses[0]))]
     fig = plt.figure(figsize=(10,10))
     for loss, label in zip(losses,legend):
@@ -22,6 +31,16 @@ def generate_and_save_training(losses, legend,name,args): #ae_loss,d_loss,e_loss
 
 
 def generate_and_save_images(model, epoch, test_input,name,args):
+    """
+        Shows input vs output plot for AE while trainging
+        
+        model (tf.keras.Model): model
+        epoch (int): current epoch number 
+        test_input (np.array): testing images input
+        name (str): model name
+        args (Namespace): arguments from cmd_args
+
+    """
   # Notice `training` is set to False.
   # This is so all layers run in inference mode (batchnorm).
     if name== 'VAE' or name == 'VAEGAN':
@@ -60,6 +79,16 @@ def generate_and_save_images(model, epoch, test_input,name,args):
     plt.close('all')
 
 def save_training_curves(model,args,test_images,test_labels,name):
+    """
+        Shows input vs output for each class for AE after training  
+        
+        model (tf.keras.Model): model
+        args (Namespace): arguments from cmd_args
+        test_images (np.array): testing images input
+        test_labels (np.array): labels testing images input
+        name (str): model name
+
+    """
     error = get_error(name,model,test_images)
     model_output = get_reconstructed(name,model,test_images)
     df = pd.DataFrame(columns=['Reconstruction'])

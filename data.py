@@ -10,6 +10,13 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 def load_mnist(limit = None,anomaly=None,percentage_anomaly=0):
+    """
+        Loads the MNIST datasets
+
+        limit (int) sets a limit on the number of test and training samples
+        anomaly (int) is the anomalous class
+        percentage_anomaly (float) adds a percentage of the anomalous/novel class to the training set
+    """
     (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.mnist.load_data()
 
     if anomaly is not None:
@@ -30,13 +37,19 @@ def load_mnist(limit = None,anomaly=None,percentage_anomaly=0):
         test_labels  = test_labels[:limit,...] 
 
     train_images = process(train_images.reshape(train_images.shape[0], 28, 28, 1))
-
     test_images = process(test_images.reshape(test_images.shape[0], 28, 28, 1))
 
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
     return (train_dataset,train_images, train_labels, test_images, test_labels)
 
 def load_fashion_mnist(limit = None,anomaly=None,percentage_anomaly=0):
+    """
+        Loads the FMNIST dataset
+
+        limit (int) sets a limit on the number of test and training samples
+        anomaly (int) is the anomalous class
+        percentage_anomaly (float) adds a percentage of the anomalous/novel class to the training set
+    """
     (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.fashion_mnist.load_data()
 
     if anomaly is not None:
@@ -57,13 +70,19 @@ def load_fashion_mnist(limit = None,anomaly=None,percentage_anomaly=0):
         test_labels  = test_labels[:limit,...] 
 
     train_images = process(train_images.reshape(train_images.shape[0], 28, 28, 1))
-
     test_images = process(test_images.reshape(test_images.shape[0], 28, 28, 1))
 
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
     return (train_dataset,train_images, train_labels, test_images, test_labels)
 
 def load_cifar10(limit = None,anomaly=None,percentage_anomaly=0):
+    """
+        Loads the CIFAR10 dataset
+
+        limit (int) sets a limit on the number of test and training samples
+        anomaly (int) is the anomalous class
+        percentage_anomaly (float) adds a percentage of the anomalous/novel class to the training set
+    """
     (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.cifar10.load_data()
     train_labels,test_labels = train_labels[:,0],test_labels[:,0] #because cifar labels are weird
 
@@ -91,6 +110,12 @@ def load_cifar10(limit = None,anomaly=None,percentage_anomaly=0):
     return (train_dataset,train_images, train_labels, test_images, test_labels)
 
 def process(data):
+    """
+        Scales data between 0 and 1 on a per image basis
+
+        data (np.array) is either the test or training data
+
+    """
     output = copy.deepcopy(data).astype('float32')
     for i,image in enumerate(data):
         x,y,z = image.shape
