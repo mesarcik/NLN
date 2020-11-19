@@ -1,3 +1,4 @@
+# Misha Mesarcik 2020
 import numpy as np 
 import tensorflow as tf
 import sys
@@ -6,6 +7,9 @@ from utils import cmd_input
 from architectures import *  
 
 def main():
+    """
+        Reads data and cmd arguments and trains models
+    """
     if cmd_input.args.data == 'MNIST':
         data  = load_mnist(limit=cmd_input.args.limit,
                            anomaly=cmd_input.args.anomaly_class,
