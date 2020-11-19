@@ -23,23 +23,23 @@ def calculate_metrics(error,
         f1 (bool): return f1 score?
 
     """
+    error = (error - np.min(error))/(np.max(error) - np.min(error))
 
-        error = (error - np.min(error))/(np.max(error) - np.min(error))
-        if hera:
-            mask= (np.char.find(test_labels, anomaly)>=0)
-            fpr, tpr, thr  = roc_curve(mask, error)
-            if f1:
-                f1 = max([f1_score(mask,error>t) for t in thr])
-            else:
-                f1 =  None
+    if hera:
+        mask= (np.char.find(test_labels, anomaly)>=0)
+        fpr, tpr, thr  = roc_curve(mask, error)
+        if f1:
+            f1 = max([f1_score(mask,error>t) for t in thr])
         else:
-            fpr, tpr, thr  = roc_curve(test_labels==anomaly, error)
-            if f1:
-                f1 = max([f1_score(test_labels==anomaly,error>t) for t in thr])
-            else: 
-                f1 = None
+            f1 =  None
+    else:
+        fpr, tpr, thr  = roc_curve(test_labels==anomaly, error)
+        if f1:
+            f1 = max([f1_score(test_labels==anomaly,error>t) for t in thr])
+        else: 
+            f1 = None
 
-        return auc(fpr, tpr),f1
+    return auc(fpr, tpr),f1
 
 
 def get_classifcation(model_type,
