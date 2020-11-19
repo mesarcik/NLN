@@ -12,24 +12,48 @@ def get_model(name = 'AE',anomaly = None):
         model = VAE()
         model.load_weights('outputs/VAE/{}/training_checkpoints/checkpoint_ae'.format(anomaly))
 
-    elif name == 'DAE' or name == 'DAE_disc':
+    elif name == 'DAE' :
         ae = Autoencoder()
         disc= Discriminator_x()
         ae.load_weights('outputs/DAE/{}/training_checkpoints/checkpoint_ae'.format(anomaly))
         disc.load_weights('outputs/DAE/{}/training_checkpoints/checkpoint_disc'.format(anomaly))
         model = [ae,disc]
 
-    elif name == 'GANomaly' or name == 'GANomaly_disc':
+    elif name == 'DAE_disc':
+        ae = Autoencoder()
+        disc= Discriminator_x()
+        ae.load_weights('outputs/DAE_disc/{}/training_checkpoints/checkpoint_ae'.format(anomaly))
+        disc.load_weights('outputs/DAE_disc/{}/training_checkpoints/checkpoint_disc'.
+                                                                                format(anomaly))
+        model = [ae,disc]
+
+    elif name == 'GANomaly':
         ae = Autoencoder()
         disc= Discriminator_x()
         encoder = tf.keras.Sequential(Encoder())
-        ae.load_weights('outputs/GANomaly/{}/training_checkpoints/checkpoint_ae'.format(
-                                                                                    anomaly))
-        disc.load_weights('outputs/GANomaly/{}/training_checkpoints/checkpoint_disc'.format(
-                                                                                       anomaly))
-        encoder.load_weights('outputs/GANomaly/{}/training_checkpoints/checkpoint_encoder'.format(anomaly))
+        ae.load_weights('outputs/GANomaly/{}/training_checkpoints/checkpoint_ae'.
+                                                                                format(anomaly))
+        disc.load_weights('outputs/GANomaly/{}/training_checkpoints/checkpoint_disc'.
+                                                                                format(anomaly))
+        encoder.load_weights('outputs/GANomaly/{}/training_checkpoints/checkpoint_encoder'.
+                                                                                format(anomaly))
 
         model = [ae,disc,encoder]
+
+    elif name == 'GANomaly_disc':
+        ae = Autoencoder()
+        disc= Discriminator_x()
+        encoder = tf.keras.Sequential(Encoder())
+        ae.load_weights('outputs/GANomaly_disc/{}/training_checkpoints/checkpoint_ae'.
+                                                                                format(anomaly))
+        disc.load_weights('outputs/GANomaly_disc/{}/training_checkpoints/checkpoint_disc'.
+                                                                                format( anomaly))
+
+        encoder.load_weights('outputs/GANomaly_disc/{}/training_checkpoints/checkpoint_encoder'.
+                                                                                format(anomaly))
+
+        model = [ae,disc,encoder]
+
 
     return model 
 
