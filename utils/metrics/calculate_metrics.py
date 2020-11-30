@@ -24,7 +24,6 @@ def calculate_metrics(error,
 
     """
     error = (error - np.min(error))/(np.max(error) - np.min(error))
-
     if hera:
         mask= (np.char.find(test_labels, anomaly)>=0)
         fpr, tpr, thr  = roc_curve(mask, error)
