@@ -9,10 +9,10 @@ def print_epoch(model_type,epoch,time,losses,AUC):
         AUC (double): AUROC score of the model
 
     """
-      print ('__________________')
-      print('Epoch {} at {} sec \n{} losses: {} \nAUC = {}'.format(epoch,
-                                                                   time,
-                                                                   model_type,
-                                                                   losses,
-                                                                   AUC))
+    print ('__________________')
+    print('Epoch {} at {} sec \n{} losses: {} \nAUC = {}'.format(epoch,
+                                                               time,
+                                                               model_type,
+                                                               losses,
+                                                               AUC))
 
