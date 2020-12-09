@@ -5,6 +5,7 @@ limit=None
 epochs=25 
 percentage=0.0
 seed=$(openssl rand -hex 3)
+d=$(date +'%m-%d-%Y-%I-%M_')
 
 for i in $(seq 0 9)
 	do
@@ -18,8 +19,8 @@ for i in $(seq 0 9)
 							      -data MNIST\
 							      -neighbors 1 2 4 5 10 100 \
 							      -radius 1 2 5 10 20 100 \
-							      -algorithm radius | tee -a mnist.log \
-								  -seed $seed
+							      -algorithm radius  \
+								  -seed $d$seed | tee -a mnist.log 
 		done
 done
 

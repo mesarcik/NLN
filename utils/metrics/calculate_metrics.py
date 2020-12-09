@@ -67,8 +67,6 @@ def get_classifcation(model_type,
 
 def save_metrics(model_type,
                  args,
-                 dataset,
-                 anomaly,
                  auc_reconstruction, 
                  f1_reconstruction,
                  neighbour,
