@@ -24,6 +24,8 @@ parser.add_argument('-algorithm', metavar='-nn', type=str, choices={"radius", "k
                     default='radius', help = 'The algorithm for calculating neighbours')
 parser.add_argument('-data', metavar='-d', type=str, default='MNIST',
                     help = 'The dataset for training and testing the model on')
+parser.add_argument('-seed', metavar='-s', type=str, 
+                    help = 'The random seed used for naming output files')
 
 args = parser.parse_args()
 args.model_name = new_name()
