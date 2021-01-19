@@ -36,6 +36,14 @@ if args.data == 'MNIST' or args.data == 'FASHION_MNIST':
 elif args.data == 'CIFAR10':
     args.input_shape =(32,32,3)
 
+elif args.data == 'MVTEC':
+    if (('grid' in args.anomaly_class) or
+        ('screw' in args.anomaly_class) or 
+        ('zipper' in args.anomaly_class)): 
+        args.input_shape =(256,256,1)
+    else:
+        args.input_shape =(256,256,3)
+
 if args.limit == 'None':
     args.limit = None
 else: 

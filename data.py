@@ -5,6 +5,8 @@ import random
 import copy
 from imageio import imread
 from glob import glob
+from skimage.transform import resize 
+from tqdm import tqdm
 import sys
 import os
 from model_config import BUFFER_SIZE,BATCH_SIZE
@@ -112,27 +114,15 @@ def load_cifar10(limit = None,anomaly=None,percentage_anomaly=0):
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
     return (train_dataset,train_images, train_labels, test_images, test_labels)
 
-def load_mvtec(limit = None,anomaly=None,percentage_anomaly=0):
+def load_mvtec(SIMO_class,limit = None,percentage_anomaly=0):
     """
         Loads the MVTEC-AD dataset
 
+        SIMO_class (str) is the SIMO class
         limit (int) sets a limit on the number of test and training samples
-        anomaly (int) is the anomalous class
         percentage_anomaly (float) adds a percentage of the anomalous/novel class to the training set
     """
-    (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.cifar10.load_data()
-    train_labels,test_labels = train_labels[:,0],test_labels[:,0] #because cifar labels are weird
-
-    if anomaly is not None:
-        indicies = np.argwhere(train_labels == int(anomaly))
-        sample_indicies = random.sample(list(indicies[:,0]), int(percentage_anomaly*
-                                                                  indicies.shape[0]))
-
-        mask_train  = np.invert(train_labels == int(anomaly))
-        mask_train[sample_indicies] = True
-
-        train_images = train_images[mask_train]
-        train_labels = train_labels[mask_train]
+    (train_images, train_labels), (test_images, test_labels) = get_mvtec_images(SIMO_class)
 
     if limit is not None:
         train_images = train_images[:limit,...]
@@ -140,28 +130,50 @@ def load_mvtec(limit = None,anomaly=None,percentage_anomaly=0):
         test_images  = test_images[:limit,...]
         test_labels  = test_labels[:limit,...] 
 
-    train_images = process(train_images.reshape(train_images.shape[0], 32, 32, 3))
-    test_images = process(test_images.reshape(test_images.shape[0], 32, 32, 3))
+    train_images = process(train_images)
+    test_images = process(test_images)
 
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
     return (train_dataset,train_images, train_labels, test_images, test_labels)
 
-def get_mvtec_images(directory='dataset/MVTecAD/'):
+def get_mvtec_images(SIMO_class, directory='datasets/MVTecAD/',  dim = (256,256,3) ):
     """"
         Walks through MVTEC dataset and returns data in the same structure as tf
+        This is typical of MISO detection. 
     """
+    if (('grid' in SIMO_class) or
+        ('screw' in SIMO_class) or 
+        ('zipper' in SIMO_class)): 
+        dim = (dim[0],dim[1],1)
 
-    output = [] 
-    data_names = [dI for dI in os.listdir(directory) if os.path.isdir(os.path.join(directory,dI))]
+    train_images, test_images, train_labels ,test_labels = [], [], [], []
+    
+    # if the training dataset has already been created then return that
+    print('{}.pickle loaded'.format(SIMO_class))
+    if os.path.exists('{}/{}.pickle'.format(directory,SIMO_class)):
+        with open('{}/{}.pickle'.format(directory,SIMO_class),'rb') as f:
+            return pickle.load(f)
 
-    # Remove grid, screw and zipper as they are greyscale and incompatible with our models 
-    for remove_names in ['grid','screw','zipper']:
-        data_names.remove(remove_names)    
+    print('Creating data for {}'.format(SIMO_class))
+    for f in tqdm(glob("{}/{}/train/good/*.png".format(directory,SIMO_class))): 
+        img = imread(f)
+        train_images.append(resize(img, dim ,anti_aliasing=False))
+        train_labels.append('non_anomalous')
 
-   
+    for f in tqdm(glob("{}/{}/test/*/*.png".format(directory,SIMO_class))): 
+        img = imread(f)
+        test_images.append(resize(img, dim ,anti_aliasing=False))
+        if 'good' in f: 
+            test_labels.append('non_anomalous')
+        else:
+            test_labels.append('bottle')
 
-def rgb2gray(rgb):
-    return np.expand_dims(np.dot(rgb[...,:3], [0.2989, 0.5870, 0.1140]),axis=-1)
+    pickle.dump(((np.array(train_images), np.array(train_labels)),(np.array(test_images), np.array(test_labels))),
+                open('{}/{}.pickle'.format(directory,SIMO_class), 'wb'), protocol=1)
+
+    return (np.array(train_images), np.array(train_labels)), (np.array(test_images), np.array(test_labels))
+
+            
 
 def process(data):
     """
