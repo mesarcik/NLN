@@ -166,7 +166,7 @@ def get_mvtec_images(SIMO_class, directory='datasets/MVTecAD/',  dim = (256,256,
         if 'good' in f: 
             test_labels.append('non_anomalous')
         else:
-            test_labels.append('bottle')
+            test_labels.append(SIMO_class)
 
     pickle.dump(((np.array(train_images), np.array(train_labels)),(np.array(test_images), np.array(test_labels))),
                 open('{}/{}.pickle'.format(directory,SIMO_class), 'wb'), protocol=1)
