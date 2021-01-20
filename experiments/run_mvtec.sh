@@ -2,7 +2,7 @@
 echo "Logging for run_mvtecr.sh at time: $(date)." >> log.log
 
 limit=1000 #None 
-epochs=100
+epochs=50
 percentage=0.0
 seed=$(openssl rand -hex 3)
 d=$(date +'%m-%d-%Y-%I-%M_')

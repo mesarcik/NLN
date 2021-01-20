@@ -3,6 +3,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import matplotlib.cm as cm
 from collections import OrderedDict
+from glob import glob
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -47,6 +48,7 @@ def heatmap(dataset='MNIST',legend=True):
                         'Radius',
                         'Neighbour']).agg({'AUC_Reconstruction_Error': 'mean',
                                            'AUC_Latent_Error': 'mean'}).reset_index()
+
     r_heat_mx = np.zeros([5,10])#np.zeros([10,5])
     K_heat_mx = np.zeros([5,10])#np.zeros([10,5])
     vals = np.zeros([5,10])#np.zeros([10,5])
@@ -114,4 +116,88 @@ def heatmap(dataset='MNIST',legend=True):
     plt.savefig('outputs/{}_heatmaps.png'.format(dataset),bbox_inches='tight',dpi=300)
     plt.show()
 
+def sensitivity_heatmap(dataset='MNIST',legend=True, multiple=False):
+    """
+        Creates heatmaps for K and r as shown in paper
+
+        dataset (str): Name of the dataset 
+        legend (bool): show the legend?
+    """
+    print('Dataset = {}\n'.format(dataset))
+
+    df = None
+    if multiple:
+        for f in glob('outputs/results_{}_*'.format(dataset)):
+            if ('updated' in f): continue
+
+            print('Loading data from {}'.format(f[16:-4]))
+            if df is None:
+                df =  add_df_parameters(f[16:-4])
+            else: df = df.append(add_df_parameters(f[16:-4]))
+
+    mdl,ld = get_max_parameters(df) 
+    print('Maximum NLN AUROC for mdl={}, ld={}'.format(mdl,ld))
+    df = df[(df.Model == mdl)&(df.Latent_Dim ==ld)]
+
+    df_agg = df.groupby(['Radius',
+                        'Neighbour']).agg({'AUC_Latent_Error': 'mean'}).reset_index()
+
+    rs = np.sort(pd.unique(df.Radius))
+    Ks = np.sort(pd.unique(df.Neighbour))
+    mx = np.zeros([len(Ks), 
+                   len(rs)])
+
+    fig,ax = plt.subplots(1,1,figsize=(3,1.5))
+    for i,r in enumerate(rs):
+        for j,K in enumerate(Ks):
+            mx[i,j] = df_agg[(df_agg.Radius == r) & (df_agg.Neighbour == K)].AUC_Latent_Error
+
+    if dataset== 'MNIST': _vmax=1
+    elif dataset== 'FASHION_MNIST': _vmax=1
+    elif dataset== 'CIFAR10': _vmax=0.7
+    im = ax.pcolor(mx,vmin=0,vmax=_vmax,edgecolor='w',linewidths=0.1)
+
+
+    xlabel = 'CIFAR-10 Classes'
+
+    ax.set_title('{}: Model = {} and L= {}'.format(dataset,mdl,ld),fontsize=8)
+    ax.set_ylabel('Radius ($r$)')
+    ax.set_xlabel('Neighbours ($K$)')
+
+    # Major ticks
+    ax.set_xticks(np.arange(0.5, len(Ks), 1))
+    ax.set_yticks(np.arange(0.5, len(rs), 1))
+
+
+    # Labels for major ticks
+    ax.set_xticklabels(Ks)
+    ax.set_yticklabels(rs)
+
+    # Create legend & Show graphic
+    cbar = fig.colorbar(im, ax=ax)#, shrink=0.95)
+    cbar.ax.set_title('AUROC',fontsize=3)
+
+    #cbar.set_ticks([0, 0.25, 0.5, 0.75, 1.0])
+    #cbar.set_ticklabels(['0', '0.25', '0.5', '0.75', '1.0'])
+
+    plt.savefig('outputs/{}_heatmaps.png'.format(dataset),bbox_inches='tight',dpi=300)
+    plt.show()
+
+def get_max_parameters(df):
+    """
+        Function that receives df and returns the average maximum model and latent_dim 
+
+        df (pd.DataFrame) dataframe of joined results
+    """
+
+    df_agg = df.groupby(['Model',
+                        'Latent_Dim',
+                        'Radius',
+                        'Neighbour']).agg({'AUC_Latent_Error': 'mean'}).reset_index()
+
+    idx= df_agg.AUC_Latent_Error.idxmax()
+    model = df_agg.iloc[idx].Model
+    ld = df_agg.iloc[idx].Latent_Dim
+
+    return  model,ld
 
