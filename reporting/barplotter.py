@@ -152,6 +152,10 @@ def barplot(dataset,legend=True, multiple=False):
     fmnist_ticks =['top','pants', 'jersey', 'dress', 'coat', 'sandal','shirt','sneaker','bag','boot']
     cifar_ticks =['plane','car', 'bird', 'cat', 'deer', 'dog','frog','horse','ship','truck']
 
+    mvtec_ticks =['bottle', 'cable', 'capsule', 'carpet', 'grid', 'hazelnut',
+                  'leather', 'metal_nut', 'pill', 'screw', 'tile', 'toothbrush', 
+                  'transistor', 'wood', 'zipper']
+
     if dataset == 'MNIST' :
         ticks = mnist_ticks
         xlabel = 'MNIST Classes'
@@ -161,6 +165,9 @@ def barplot(dataset,legend=True, multiple=False):
     elif dataset == 'CIFAR10':
         ticks = cifar_ticks
         xlabel = 'CIFAR-10 Classes'
+    elif 'MVTEC' in dataset:
+        ticks = mvtec_ticks 
+        xlabel = 'MVTEC Classes'
 
     plt.xticks([2*r + 3*recon_width for r in range(_max)], ticks)
     ax.set_ylim([0,1])

@@ -21,7 +21,6 @@ for i in bottle cable capsule carpet grid hazelnut leather metal_nut pill screw 
 							      -radius 1 2 5 10 20 100 \
 							      -algorithm radius \
 								  -seed $d$seed | tee -a mvtec.log 
-									
 		done
 done
 

@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 import matplotlib.cm as cm
+from matplotlib import colors
 from collections import OrderedDict
 from glob import glob
 import warnings
@@ -152,13 +153,8 @@ def sensitivity_heatmap(dataset='MNIST',legend=True, multiple=False):
         for j,K in enumerate(Ks):
             mx[i,j] = df_agg[(df_agg.Radius == r) & (df_agg.Neighbour == K)].AUC_Latent_Error
 
-    if dataset== 'MNIST': _vmax=1
-    elif dataset== 'FASHION_MNIST': _vmax=1
-    elif dataset== 'CIFAR10': _vmax=0.7
-    im = ax.pcolor(mx,vmin=0,vmax=_vmax,edgecolor='w',linewidths=0.1)
-
-
-    xlabel = 'CIFAR-10 Classes'
+    
+    im = ax.pcolor(mx,vmin=np.min(mx),vmax=np.max(mx),edgecolor='w',linewidths=0.1)
 
     ax.set_title('{}: Model = {} and L= {}'.format(dataset,mdl,ld),fontsize=8)
     ax.set_ylabel('Radius ($r$)')
