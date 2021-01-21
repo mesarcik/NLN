@@ -3,6 +3,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import matplotlib.cm as cm
 from collections import OrderedDict
+from glob import glob
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -33,21 +34,37 @@ def add_df_parameters(dataset):
 
     return df_new
 
-def barplot(dataset,legend=True):
+def barplot(dataset,legend=True, multiple=False):
     """
         Creates a single barplot for a given dataset 
 
         dataset (str) name of dataset  
     """
     print('Dataset = {}\n'.format(dataset))
-    df = add_df_parameters(dataset)
+    df = None
+    if multiple:
+        for f in glob('outputs/results_{}_*'.format(dataset)):
+            if ('updated' in f): continue
 
-    df_agg = df.groupby(['Model',
+            print('Loading data from {}'.format(f[16:-4]))
+            if df is None:
+                df =  add_df_parameters(f[16:-4])
+            else: df = df.append(add_df_parameters(f[16:-4]))
+        
+
+    else:
+        df = add_df_parameters(dataset)
+
+    df_agg_recon = df.groupby(['Model',
+                              'Class',
+                              'Latent_Dim']).agg({'AUC_Reconstruction_Error': 'mean'}).reset_index()
+
+    df_agg_nln = df.groupby(['Model',
                         'Class',
                         'Latent_Dim',
                         'Radius',
-                        'Neighbour']).agg({'AUC_Reconstruction_Error': 'mean',
-                                           'AUC_Latent_Error': 'mean'}).reset_index()
+                        'Neighbour']).agg({'AUC_Latent_Error': 'mean'}).reset_index()
+
     _max = len(pd.unique(df.Class))
     recon_width = 0.35
     latent_width = 0.10
@@ -67,29 +84,42 @@ def barplot(dataset,legend=True):
     plt.rcParams['hatch.color'] = 'red'
 
     r = np.arange(0,2*_max,2)
-    for model,color_recon,color_latent in zip(pd.unique(df.Model),
+    for model,color_recon,color_latent in zip(['AE','AAE','VAE','DAE_disc','GANomaly'],
                                               colours_recon,
                                               colours_latent):
         recon,latent = [],[]
         for cl in np.sort(pd.unique(df.Class)):
-            idx_latent = (df_agg[df_agg.Model == model].AUC_Latent_Error.idxmax())
-            ld = df_agg.iloc[idx_latent]['Latent_Dim']
-            rad  = df_agg.iloc[idx_latent]['Radius']
-            neigh  = df_agg.iloc[idx_latent]['Neighbour']
 
-            df_max = df[(df.Model == model) &
-                        (df.Latent_Dim == ld) &
-                        (df.Neighbour == neigh) &
-                        (df.Radius == rad) &
-                        (df.Class == cl)]
+            idx_latent = (df_agg_nln[df_agg_nln.Model == model].AUC_Latent_Error.idxmax())
+            idx_recon = (df_agg_recon[df_agg_recon.Model == model].AUC_Reconstruction_Error.idxmax())
+
+            ld = df_agg_nln.iloc[idx_latent]['Latent_Dim']
+            rad  = df_agg_nln.iloc[idx_latent]['Radius']
+            neigh  = df_agg_nln.iloc[idx_latent]['Neighbour']
+
+            df_max = df_agg_nln[(df_agg_nln.Model == model) &
+                                (df_agg_nln.Latent_Dim == ld) &
+                                (df_agg_nln.Neighbour == neigh) &
+                                (df_agg_nln.Radius == rad) &
+                                (df_agg_nln.Class == cl)]
 
             latent.append(df_max['AUC_Latent_Error'].values[0])
+
+            ld = df_agg_recon.iloc[idx_recon]['Latent_Dim']
+
+            df_max = df_agg_recon[(df_agg_recon.Model == model) &
+                        (df_agg_recon.Latent_Dim == ld) &
+                        (df_agg_recon.Class == cl)]
 
             recon.append(df_max['AUC_Reconstruction_Error'].values[0])
 
 
-        print('Model {} \nMean Reconstruction error {} \nMean Latent Error {}\nPercetange Increase {}\n'.format(model,np.mean(recon), np.mean(latent), round(1-np.mean(recon)/np.mean(latent),4)))
-        print('Latent Dim: {}'.format(ld))
+        print('Model {} \nMean Reconstruction error {}+-{}\nMean Latent Error {}+-{}\nPercetange Increase {}\n'.format(model,
+                                                                                                                        round(np.mean(recon),3), 
+                                                                                                                        round(np.var(recon),2), 
+                                                                                                                        round(np.mean(latent),3), 
+                                                                                                                        round(np.var(latent),2), 
+                                                                                                                        round(1-np.mean(recon)/np.mean(latent),4)))
 
         r = [x + recon_width for x in r]
 
@@ -122,6 +152,10 @@ def barplot(dataset,legend=True):
     fmnist_ticks =['top','pants', 'jersey', 'dress', 'coat', 'sandal','shirt','sneaker','bag','boot']
     cifar_ticks =['plane','car', 'bird', 'cat', 'deer', 'dog','frog','horse','ship','truck']
 
+    mvtec_ticks =['bottle', 'cable', 'capsule', 'carpet', 'grid', 'hazelnut',
+                  'leather', 'metal_nut', 'pill', 'screw', 'tile', 'toothbrush', 
+                  'transistor', 'wood', 'zipper']
+
     if dataset == 'MNIST' :
         ticks = mnist_ticks
         xlabel = 'MNIST Classes'
@@ -131,6 +165,9 @@ def barplot(dataset,legend=True):
     elif dataset == 'CIFAR10':
         ticks = cifar_ticks
         xlabel = 'CIFAR-10 Classes'
+    elif 'MVTEC' in dataset:
+        ticks = mvtec_ticks 
+        xlabel = 'MVTEC Classes'
 
     plt.xticks([2*r + 3*recon_width for r in range(_max)], ticks)
     ax.set_ylim([0,1])

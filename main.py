@@ -24,6 +24,11 @@ def main():
                            anomaly=cmd_input.args.anomaly_class,
                            percentage_anomaly =cmd_input.args.percentage_anomaly)
 
+    elif cmd_input.args.data == 'MVTEC':
+        data  = load_mvtec(SIMO_class=cmd_input.args.anomaly_class,
+                            limit=cmd_input.args.limit,
+                            percentage_anomaly =cmd_input.args.percentage_anomaly)
+
     (train_dataset,train_images,train_labels,test_images,test_labels) = data
 
     print(" __________________________________ \n Anomaly class {}".format(
@@ -39,6 +44,7 @@ def main():
     train_ae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
     train_vae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
     train_aae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
+
 
 
 if __name__ == '__main__':

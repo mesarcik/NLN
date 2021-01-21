@@ -4,6 +4,8 @@ echo "Logging for run_fmnist.sh at time: $(date)." >> log.log
 limit=None 
 epochs=25 
 percentage=0.0
+seed=$(openssl rand -hex 3)
+d=$(date +'%m-%d-%Y-%I-%M_')
 
 for i in $(seq 0 9)
 	do
@@ -17,8 +19,9 @@ for i in $(seq 0 9)
 							      -data FASHION_MNIST\
 							      -neighbors 1 2 4 5 10 100 \
 							      -radius 1 2 5 10 20 100 \
-							      -algorithm radius | tee -a fmnist.log 
+							      -algorithm radius \ 
+								  -seed $d$seed | tee -a fmnist.log 
 		done
 done
 
-python report.py -data FASHION_MNIST
+python report.py -data FASHION_MNIST -seed $seed

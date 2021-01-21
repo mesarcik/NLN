@@ -24,6 +24,8 @@ parser.add_argument('-algorithm', metavar='-nn', type=str, choices={"radius", "k
                     default='radius', help = 'The algorithm for calculating neighbours')
 parser.add_argument('-data', metavar='-d', type=str, default='MNIST',
                     help = 'The dataset for training and testing the model on')
+parser.add_argument('-seed', metavar='-s', type=str, 
+                    help = 'The random seed used for naming output files')
 
 args = parser.parse_args()
 args.model_name = new_name()
@@ -33,6 +35,14 @@ if args.data == 'MNIST' or args.data == 'FASHION_MNIST':
 
 elif args.data == 'CIFAR10':
     args.input_shape =(32,32,3)
+
+elif args.data == 'MVTEC':
+    if (('grid' in args.anomaly_class) or
+        ('screw' in args.anomaly_class) or 
+        ('zipper' in args.anomaly_class)): 
+        args.input_shape =(256,256,1)
+    else:
+        args.input_shape =(256,256,3)
 
 if args.limit == 'None':
     args.limit = None

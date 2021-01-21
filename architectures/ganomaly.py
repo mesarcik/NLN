@@ -135,9 +135,7 @@ def main(train_dataset,train_images,train_labels,test_images,test_labels,args):
                                              hera = args.data == 'HERA',
                                              f1=True)
     save_metrics('GANomaly',
-                 args.model_name,
-                 args.data,
-                 args.anomaly_class,
+                 args,
                  auc_recon, 
                  f1_recon,
                  neighbour,
