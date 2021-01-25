@@ -7,7 +7,7 @@ from .plotter import plot_max_avg
 from .embedding import plot_overlay
 from .embedding import plot_knn_neighbours
 from .embedding import plot_radius_neighbours 
-from .heatmap import heatmap, get_max_parameters, sensitivity_heatmap
+from .heatmap import heatmap, get_max_parameters, sensitivity_heatmap,sensitivity_heatmap_shared
 from .barplotter import barplot, barplot_shared
 from .statistics import get_statistics
 
