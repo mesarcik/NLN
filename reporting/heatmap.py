@@ -179,6 +179,67 @@ def sensitivity_heatmap(dataset='MNIST',legend=True, multiple=False):
     plt.savefig('outputs/{}_heatmaps.png'.format(dataset),bbox_inches='tight',dpi=300)
     plt.show()
 
+def sensitivity_heatmap_shared(legend=True, multiple=True):
+    """
+        Creates heatmaps for K and r as shown in paper
+
+        dataset (str): Name of the dataset 
+        legend (bool): show the legend?
+    """
+    datasets = ['MNIST', 'FASHION_MNIST','CIFAR10','MVTEC']
+    fig,axs = plt.subplots(2,2,figsize=(6,3),sharex=True,sharey=True)
+    x_inds, y_inds  = [0,0,1,1], [0,1,0,1]
+    for dataset,x,y in zip(datasets,x_inds,y_inds):
+        df = None
+        for f in glob('outputs/results_{}_*'.format(dataset)):
+            if ('updated' in f): continue
+
+            print('Loading data from {}'.format(f[16:-4]))
+            if df is None:
+                df =  add_df_parameters(f[16:-4])
+            else: df = df.append(add_df_parameters(f[16:-4]))
+
+        mdl,ld = get_max_parameters(df) 
+        print('Maximum NLN AUROC for mdl={}, ld={}'.format(mdl,ld))
+        df = df[(df.Model == mdl)&(df.Latent_Dim ==ld)]
+
+        df_agg = df.groupby(['Radius',
+                            'Neighbour']).agg({'AUC_Latent_Error': 'mean'}).reset_index()
+
+        rs = np.sort(pd.unique(df.Radius))
+        Ks = np.sort(pd.unique(df.Neighbour))
+        mx = np.zeros([len(Ks), 
+                       len(rs)])
+
+        for i,r in enumerate(rs):
+            for j,K in enumerate(Ks):
+                mx[i,j] = df_agg[(df_agg.Radius == r) & (df_agg.Neighbour == K)].AUC_Latent_Error
+
+        
+        im = axs[x,y].pcolor(mx,vmin=np.min(mx),vmax=np.max(mx),edgecolor='w',linewidths=0.1)
+
+        axs[x,y].set_title('{}'.format(dataset),fontsize=8)
+
+        # Major ticks
+        axs[x,y].set_xticks(np.arange(0.5, len(Ks), 1))
+        axs[x,y].set_yticks(np.arange(0.5, len(rs), 1))
+
+
+        # Labels for major ticks
+        axs[x,y].set_xticklabels(Ks)
+        axs[x,y].set_yticklabels(rs)
+
+        # Create legend & Show graphic
+        cbar = fig.colorbar(im, ax=axs[x,y])#, shrink=0.95)
+
+
+    fig.text(0.5, 0.00, 'Radius ($r$)', ha='center')
+    fig.text(0.00, 0.5, 'Neighbours ($K$)', va='center', rotation='vertical')
+    plt.tight_layout()
+
+    plt.savefig('outputs/shared_sensitivity_heatmaps.png',bbox_inches='tight',dpi=300)
+    plt.show()
+
 def get_max_parameters(df):
     """
         Function that receives df and returns the average maximum model and latent_dim 

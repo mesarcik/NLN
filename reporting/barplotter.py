@@ -50,7 +50,9 @@ def barplot(dataset,legend=True, multiple=False):
             if df is None:
                 df =  add_df_parameters(f[16:-4])
             else: df = df.append(add_df_parameters(f[16:-4]))
-        
+
+        if dataset=='MVTEC':
+            df = df[(df .Radius != 1) & (df.Radius != 2)] 
 
     else:
         df = add_df_parameters(dataset)
