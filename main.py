@@ -10,24 +10,16 @@ def main():
         Reads data and cmd arguments and trains models
     """
     if cmd_input.args.data == 'MNIST':
-        data  = load_mnist(limit=cmd_input.args.limit,
-                           anomaly=cmd_input.args.anomaly_class,
-                           percentage_anomaly =cmd_input.args.percentage_anomaly)
+        data  = load_mnist(cmd_input.args)
 
     elif cmd_input.args.data == 'FASHION_MNIST':
-        data  = load_fashion_mnist(limit=cmd_input.args.limit,
-                           anomaly=cmd_input.args.anomaly_class,
-                           percentage_anomaly =cmd_input.args.percentage_anomaly)
+        data  = load_fashion_mnist(cmd_input.args)
 
     elif cmd_input.args.data == 'CIFAR10':
-        data  = load_cifar10(limit=cmd_input.args.limit,
-                           anomaly=cmd_input.args.anomaly_class,
-                           percentage_anomaly =cmd_input.args.percentage_anomaly)
+        data  = load_cifar10(cmd_input.args)
 
     elif cmd_input.args.data == 'MVTEC':
-        data  = load_mvtec(SIMO_class=cmd_input.args.anomaly_class,
-                            limit=cmd_input.args.limit,
-                            percentage_anomaly =cmd_input.args.percentage_anomaly)
+        data  = load_mvtec(cmd_input.args)
 
     (train_dataset,train_images,train_labels,test_images,test_labels) = data
 
