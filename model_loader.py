@@ -14,7 +14,7 @@ def get_error(name,model,test_images,return_z=False):
     if name == 'AE':
         model_output = model(test_images)
         z = model.encoder(test_images)
-        error = (test_images - model_output.numpy())
+        error = np.abs(test_images - model_output.numpy())
 
     elif name == 'AAE':
         model_output = model(test_images)

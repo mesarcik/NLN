@@ -8,3 +8,4 @@ pywavelets
 tqdm
 scikit-image
 coolname
+imageio

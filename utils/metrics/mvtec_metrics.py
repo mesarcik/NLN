@@ -9,10 +9,8 @@ from utils import cmd_input
 
 
 def accuracy_metrics(model,
-                     normal_images,
-                     normal_labels,
-                     anomalous_images,
-                     anomalous_labels,
+                     test_images,
+                     test_labels,
                      model_type,
                      args):
 
@@ -29,33 +27,33 @@ def accuracy_metrics(model,
 
     """
     # Get output from model #TODO: do we want to normalise?
-    error_normal = normalise(get_error(model_type,model,normal_images)) 
-    print(error_normal)
-
-    error_anomalous = normalise(get_error(model_type,model,anomalous_images))
-    print(error_anomalous)
+    error = normalise(get_error(model_type,model,test_images)) 
+    #print(error)
+    
     #x_hat_anomalous = get_reconstructed(model_type, model,anomalous_images)
 
     # Find AUROC threshold that optimises max(TPR-FPR)
-    fpr, tpr, thr  = roc_curve(normal_labels, error_normal)
-    thr_normal = get_threshold(fpr,tpr,thr)
-    print(thr_normal)
+    print(args.anomaly_class)
+    fpr, tpr, thr  = roc_curve(test_labels == args.anomaly_class, error)
+    print('This is AUC {}'.format(auc(fpr, tpr)))
 
-    fpr, tpr, thr  = roc_curve(anomalous_labels, error_anomalous)
-    thr_anomalous = get_threshold(fpr,tpr,thr)
-    print(fpr)
-    print(tpr)
-    print(thr_anomalous)
+    thr = get_threshold(fpr,tpr,thr,'MA',test_labels, error,args)
+
+    #print('FPR {}'.format(fpr))
+    #print('TPR {}'.format(tpr))
+    #print(thr)
 
     # Accuracy of detecting anomalies and non-anomalies using this threshold
-    normal_accuracy = accuracy_score(normal_labels, error_normal> thr_anomalous)
-    anomalous_accuracy = accuracy_score(anomalous_labels, error_anomalous> thr_anomalous)
+    normal_accuracy = accuracy_score(test_labels == 'non_anomalous', error < thr)
+    anomalous_accuracy = accuracy_score(test_labels == args.anomaly_class, error > thr)
 
     print('Anomalous Accuracy = {}'.format(anomalous_accuracy))
     print('Normal Accuracy = {}'.format(normal_accuracy))
 
+    return thr
+
     
-def get_threshold(fpr,tpr,thr):
+def get_threshold(fpr,tpr,thr,flag,test_labels,error,args):
     """
         Returns optimal threshold
 
@@ -64,7 +62,17 @@ def get_threshold(fpr,tpr,thr):
         thr (np.array): thresholds for AUROC
     
     """
-    idx = np.argmax(tpr-fpr) 
+    if flag == 'MD':# MD = Maximise diff
+        idx = np.argmax(tpr-fpr) 
+    if flag == 'MA': # MA = Maximise average
+        idx, temp = None, 0
+        for i,t in enumerate(thr):
+            normal_accuracy = accuracy_score(test_labels == 'non_anomalous', error < t)
+            anomalous_accuracy = accuracy_score(test_labels == args.anomaly_class, error > t)
+            m = np.mean([anomalous_accuracy, normal_accuracy])
+            if  m > temp:
+                idx = i
+                temp = m
     return thr[idx]
 
 def normalise(x):
