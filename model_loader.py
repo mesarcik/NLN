@@ -33,7 +33,7 @@ def get_error(name,model,test_images,return_z=False):
         d_x, _ = model[1](test_images)
         d_x_hat, _ = model[1](x_hat)
         
-        reconstruction_error = (test_images, x_hat.numpy())
+        reconstruction_error = (test_images - x_hat.numpy())
         reconstruction_error = reconstruction_error.mean(
                                                          axis=tuple(
                                                          range(1,reconstruction_error.ndim)))

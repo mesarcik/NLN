@@ -27,6 +27,16 @@ parser.add_argument('-data', metavar='-d', type=str, default='MNIST',
 parser.add_argument('-seed', metavar='-s', type=str, 
                     help = 'The random seed used for naming output files')
 
+parser.add_argument('-rotate', metavar='-rot', type=bool,default=False, 
+                    help = 'Train on rotated augmentations?')
+
+parser.add_argument('-crop', metavar='-cr', type=bool,default=False, 
+                    help = 'Train on crops?')
+parser.add_argument('-crop_x', metavar='-cx', type=int,default=7, 
+                    help = 'x-dimension of crop')
+parser.add_argument('-crop_y', metavar='-cy', type=int,default=7, 
+                    help = 'y-dimension of crop')
+
 parser.add_argument('-patches', metavar='-ptch', type=bool,default=False, 
                     help = 'Train on patches?')
 parser.add_argument('-patch_x', metavar='-px', type=int,default=7, 
@@ -58,6 +68,9 @@ elif args.data == 'MVTEC':
 
 if args.patches:
     args.input_shape = (args.patch_x,args.patch_y,args.input_shape[-1])
+
+if args.crop:
+    args.input_shape = (args.crop_x,args.crop_y,args.input_shape[-1])
 
 if args.limit == 'None':
     args.limit = None

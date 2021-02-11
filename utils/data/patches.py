@@ -5,8 +5,9 @@ def get_patched_dataset(train_images,
                         train_labels, 
                         test_images, 
                         test_labels,
-                        p_size, 
-                        s_size,
+                        test_mask=None,
+                        p_size=4, 
+                        s_size=4,
                         rate=(1,1,1,1),
                         padding='VALID',
                         augmentation=False):
@@ -35,7 +36,17 @@ def get_patched_dataset(train_images,
                                               s_size,
                                               rate,
                                               padding)
-    return train_patches,train_labels_p,test_patches,test_labels_p
+    if test_mask is not None:
+        test_mask_patches, _ = get_patches(test_mask,
+                                           test_labels,
+                                           p_size,
+                                           s_size,
+                                           rate,
+                                           padding)
+
+        return train_patches,train_labels_p,test_patches,test_labels_p,test_mask_patches
+    else:
+        return train_patches,train_labels_p,test_patches,test_labels_p
 
 
 def get_patches(x, 

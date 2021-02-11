@@ -20,8 +20,10 @@ def main():
 
     elif cmd_input.args.data == 'MVTEC':
         data  = load_mvtec(cmd_input.args)
+        test_mask = data[5]
 
-    (train_dataset,train_images,train_labels,test_images,test_labels) = data
+    (train_dataset,train_images,train_labels,test_images,test_labels) = data[0:5]
+
 
     print(" __________________________________ \n Anomaly class {}".format(
                                                cmd_input.args.anomaly_class))
