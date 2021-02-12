@@ -6,6 +6,8 @@ from sklearn.model_selection import train_test_split
 from utils.data import (get_mvtec_images, 
                         process,
                         get_patched_dataset,
+                        random_rotation,
+                        random_crop,
                         resize)
 
 
@@ -157,41 +159,52 @@ def load_mvtec(args):
         args.limit (int) sets a args.limit on the number of test and training samples
         args.percentage_anomaly (float) adds a percentage of the anomalous/novel class to the training set
     """
-    (train_images, train_labels), (test_images, test_labels, test_mask) = get_mvtec_images(args.anomaly_class)
+    (train_images, train_labels), (test_images, test_labels, test_masks) = get_mvtec_images(args.anomaly_class)
 
     if args.limit is not None:
         train_images = train_images[:args.limit,...]
         train_labels = train_labels[:args.limit,...]  
         test_images  = test_images[:args.limit,...]
         test_labels  = test_labels[:args.limit,...] 
-        test_mask = test_mask[:args.limit,...] 
+        test_masks = test_masks[:args.limit,...] 
 
     # TODO
     # I need to note that this way of processing might be weird,
     # First get patches then resize?
-    train_images = process(resize(train_images,args.input_shape))
-    test_images = process(resize(test_images, args.input_shape))
-    test_mask = process(resize(test_mask, (args.input_shape[0],
-                                           args.input_shape[1],
-                                           1)))[...,0] # a hack to get mask without last dimension.
 
     if args.patches:
         data  = get_patched_dataset(train_images,
                                     train_labels,
                                     test_images,
                                     test_labels,
-                                    test_mask,
+                                    test_masks,
                                     p_size = (1,args.patch_x, args.patch_y, 1),
-                                    s_size = (1,args.patch_stride_x, args.patch_stride_y, 1))
-    if args.crop:
-        #TODO
+                                    s_size = (1,args.patch_stride_x, args.patch_stride_y, 1),
+                                    central_crop=True)
+
+        train_images, train_labels, test_images, test_labels, test_masks = data
 
     if args.rotate:
-        #TODO
+        train_images = random_rotation(train_images) 
+        test_images, test_masks = random_rotation(test_images,test_masks)
 
-        train_images, train_labels, test_images, test_labels, test_mask = data
+    if args.crop:
+        train_images = random_crop(train_images,
+                                   crop_size=(args.crop_x, args.crop_y))
+        test_images, test_masks = random_crop(test_images,
+                                             crop_size=(args.crop_x, args.crop_y),
+                                             masks = test_masks)
+
+
+    train_images = process(resize(train_images,args.input_shape))
+    test_images = process(resize(test_images, args.input_shape))
+    test_masks = process(resize(test_masks, (args.input_shape[0],
+                                           args.input_shape[1],
+                                           1)))[...,0] # a hack to get mask without last dimension.
+
+
 
 
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
-    return (train_dataset,train_images, train_labels, test_images, test_labels, test_mask)
+    return (train_dataset,train_images, train_labels, test_images, test_labels, test_masks)
             

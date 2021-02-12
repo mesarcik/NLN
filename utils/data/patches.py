@@ -5,12 +5,12 @@ def get_patched_dataset(train_images,
                         train_labels, 
                         test_images, 
                         test_labels,
-                        test_mask=None,
-                        p_size=4, 
-                        s_size=4,
+                        test_masks=None,
+                        p_size=(1,4,4,1), 
+                        s_size=(1,4,4,1),
                         rate=(1,1,1,1),
                         padding='VALID',
-                        augmentation=False):
+                        central_crop=False):
     """
         This function returns the training and testing set in patch form 
 
@@ -23,6 +23,11 @@ def get_patched_dataset(train_images,
         rate (list) subsampling rate after getting patches 
         padding (str) ...
     """
+    if central_crop:
+        train_images = tf.image.central_crop(train_images,0.8)
+        test_images = tf.image.central_crop(test_images,0.8)
+        test_masks = tf.image.central_crop(test_masks,0.8)
+
     train_patches, train_labels_p = get_patches(train_images,
                                                 train_labels,
                                                 p_size,
@@ -36,15 +41,16 @@ def get_patched_dataset(train_images,
                                               s_size,
                                               rate,
                                               padding)
-    if test_mask is not None:
-        test_mask_patches, _ = get_patches(test_mask,
+    if test_masks is not None:
+        test_masks = np.expand_dims(test_masks,axis=-1)
+        test_masks_patches, _ = get_patches(test_masks,
                                            test_labels,
                                            p_size,
                                            s_size,
                                            rate,
                                            padding)
 
-        return train_patches,train_labels_p,test_patches,test_labels_p,test_mask_patches
+        return train_patches,train_labels_p,test_patches,test_labels_p,test_masks_patches[...,0]
     else:
         return train_patches,train_labels_p,test_patches,test_labels_p
 
