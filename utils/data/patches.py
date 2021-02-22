@@ -24,9 +24,9 @@ def get_patched_dataset(train_images,
         padding (str) ...
     """
     if central_crop:
-        train_images = tf.image.central_crop(train_images,0.8)
-        test_images = tf.image.central_crop(test_images,0.8)
-        test_masks = tf.image.central_crop(test_masks,0.8)
+        train_images = tf.image.central_crop(train_images,0.7)
+        test_images = tf.image.central_crop(test_images,0.7)
+        test_masks = tf.image.central_crop(test_masks,0.7)
 
     train_patches, train_labels_p = get_patches(train_images,
                                                 train_labels,

@@ -16,8 +16,9 @@ ae_optimizer = tf.keras.optimizers.Adam(1e-5)
 discriminator_optimizer = tf.keras.optimizers.Adam(1e-5)
 generator_optimizer = tf.keras.optimizers.Adam(1e-5)
 
-def ae_loss(x,x_hat,loss_weight):
-    return loss_weight * cross_entropy(x, x_hat)
+def l2_loss(x,x_hat,loss_weight):
+    return loss_weight*tf.reduce_mean(tf.math.abs(tf.subtract(x, 
+                                                              x_hat)))
 
 def discriminator_loss(real_output, fake_output,loss_weight):
     real_loss =  cross_entropy(tf.ones_like(real_output), real_output)
@@ -40,7 +41,7 @@ def train_step(ae,discriminator,images,latent_dim):
       real_output = discriminator(noise, training=True)
       fake_output = discriminator(z, training=True)
 
-      auto_loss = ae_loss(images,x_hat,1)
+      auto_loss = l2_loss(images,x_hat,1)
       disc_loss = discriminator_loss(real_output, fake_output,1)
       gen_loss = generator_loss(fake_output,1)
 

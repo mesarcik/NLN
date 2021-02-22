@@ -12,8 +12,8 @@ from model_config import BUFFER_SIZE,BATCH_SIZE,cross_entropy
 optimizer = tf.keras.optimizers.Adam()#1e-4)
 
 def l2_loss(x,x_hat):
-    return cross_entropy(tf.keras.backend.flatten(x),
-                        tf.keras.backend.flatten(x_hat))
+    return tf.reduce_sum(tf.math.abs(tf.subtract(tf.keras.backend.flatten(x),
+                                  tf.keras.backend.flatten(x_hat))))
 
 def KL_loss(logvar, mean):
     kl_loss = 1 + logvar - tf.square(mean) - tf.exp(logvar)

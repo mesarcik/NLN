@@ -17,14 +17,16 @@ discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
 encoder_optimizer = tf.keras.optimizers.Adam(1e-4)
 
 def ae_loss(x,x_hat,loss_weight):
-    return loss_weight*tf.reduce_mean(tf.math.abs(tf.subtract(x, x_hat)))
+    return loss_weight*tf.reduce_mean(tf.math.abs(tf.subtract(x, 
+                                                              x_hat)))
 
 def discriminator_loss(real_output, fake_output,loss_weight):
-    return loss_weight*tf.reduce_mean(tf.square(tf.subtract(real_output, 
-                                                            fake_output)))
+    return loss_weight*tf.reduce_mean(tf.math.abs(tf.subtract(real_output, 
+                                                              fake_output)))
 
 def encoder_loss(z,z_hat, loss_weight):
-    return loss_weight*tf.reduce_mean(tf.square(tf.subtract(z, z_hat)))
+    return loss_weight*tf.reduce_mean(tf.math.abs(tf.subtract(z, 
+                                                              z_hat)))
 
 @tf.function
 def train_step(ae,encoder,discriminator,images):

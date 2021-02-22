@@ -16,7 +16,9 @@ from model_config import *
 optimizer = tf.keras.optimizers.Adam()
 
 def l2_loss(x,x_hat):
-    return cross_entropy(x,x_hat)
+
+    return tf.reduce_mean(tf.math.abs(tf.subtract(x,x_hat)))
+
 
 @tf.function
 def train_step(model, x):
