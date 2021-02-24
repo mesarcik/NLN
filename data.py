@@ -182,6 +182,7 @@ def load_mvtec(args):
                                     s_size = (1,args.patch_stride_x, args.patch_stride_y, 1),
                                     central_crop=True)
 
+
         train_images, train_labels, test_images, test_labels, test_masks = data
 
     if args.rotate:
