@@ -172,6 +172,10 @@ def load_mvtec(args):
     # I need to note that this way of processing might be weird,
     # First get patches then resize?
 
+    train_images = process(train_images)
+    test_images = process(test_images)
+    test_masks = process(np.expand_dims(test_masks,axis=-1))[...,0]
+
     if args.patches:
         data  = get_patched_dataset(train_images,
                                     train_labels,
@@ -197,14 +201,8 @@ def load_mvtec(args):
                                              masks = test_masks)
 
 
-    train_images = process(resize(train_images,args.input_shape))
-    test_images = process(resize(test_images, args.input_shape))
-    test_masks = process(resize(test_masks, (args.input_shape[0],
-                                           args.input_shape[1],
-                                           1)))[...,0] # a hack to get mask without last dimension.
-
-
-
+    train_images = train_images.astype('float32')
+    test_images = test_images.astype('float32')
 
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
     return (train_dataset,train_images, train_labels, test_images, test_labels, test_masks)

@@ -28,17 +28,24 @@ def get_sparse_errors(images,train_images, model,z,neighbours_idx,model_type,max
     """
     #TODO All of these methods are super inefficient
     error = []
+    m = np.expand_dims(np.mean(images,axis=0),axis=0)
+
     if model_type == 'AE' or model_type == 'AAE' or model_type =='VAE': 
 
         with tf.device('/cpu:0'): # Because of weird tf memory management it is faster on cpu
             x_hat= model.decoder(z).numpy()
 
         for i,n in enumerate(neighbours_idx):
-            if len(n) ==0: temp = np.array([i])
-            elif len(n) > max_neigh: temp  = n[:max_neigh] 
-            else: temp  = n
+            if len(n) ==0: 
+                temp = np.array([i])
+                d = m 
+            elif len(n) > max_neigh: 
+                temp  = n[:max_neigh] 
+                d = x_hat[temp.astype(int)]
+            else: 
+                temp  = n
+                d = x_hat[temp.astype(int)]
 
-            d = x_hat[temp.astype(int)]
             im = np.stack([images[i]]*temp.shape[-1],axis=0)
             error.append(np.mean(np.abs(d - im)**2))
 
@@ -47,34 +54,58 @@ def get_sparse_errors(images,train_images, model,z,neighbours_idx,model_type,max
             x_hat= model[0].decoder(z).numpy()
 
         for i,n in enumerate(neighbours_idx):
-            if len(n) ==0: temp = np.array([i])
-            elif len(n) > max_neigh: temp  = n[:max_neigh] 
-            else: temp  = n
+            if len(n) ==0: 
+                temp = np.array([i])
+                d = m
+            elif len(n) > max_neigh: 
+                temp  = n[:max_neigh] 
+                d = x_hat[temp.astype(int)]
+            else: 
+                temp  = n
+                d = x_hat[temp.astype(int)]
 
-            d = x_hat[temp.astype(int)]
             im = np.stack([images[i]]*temp.shape[-1],axis=0)
             error.append(np.mean(np.abs(d - im)**2))
 
     elif model_type == 'DAE_disc':
         with tf.device('/cpu:0'): # Because of weird tf memory management it is faster on cpu
             x_hat= model[0].decoder(z).numpy()
+
             d_x_hat, _ = model[1](x_hat)
+            d_x_hat_m, _ = model[1](m)
+
             d_x, _ = model[1](train_images)
+            d_x_m, _ = model[1](m)
 
             d_x_hat = d_x_hat.numpy()
+            d_x_hat_m = d_x_hat_m.numpy()
+
             d_x = d_x.numpy()
+            d_x_m = d_x_m.numpy()
 
         for i,n in enumerate(neighbours_idx):
-            if len(n) ==0: temp = np.array([i])
-            elif len(n) > max_neigh: temp  = n[:max_neigh] 
-            else: temp  = n
+            if len(n) ==0: 
+                temp = np.array([i])
+                x_hats = m 
+                d_x_hats = d_x_hat_m 
+                d_xs = d_x_m
 
-            x_hats = x_hat[temp.astype(int)]
+            elif len(n) > max_neigh: 
+                temp  = n[:max_neigh] 
+                x_hats = x_hat[temp.astype(int)]
+                d_x_hats = d_x_hat[temp.astype(int)]
+                d_xs = d_x[temp.astype(int)]
+
+            else: 
+                temp  = n
+                x_hats = x_hat[temp.astype(int)]
+                d_x_hats = d_x_hat[temp.astype(int)]
+                d_xs = d_x[temp.astype(int)]
+
+
             ims = np.stack([images[i]]*temp.shape[-1],axis=0)
             reconstruction_error = np.mean(np.abs(x_hats - ims)**2)
 
-            d_x_hats = d_x_hat[temp.astype(int)]
-            d_xs = d_x[temp.astype(int)]
             discriminator_error  = np.mean(np.abs(d_x_hats  - d_xs)**2)
 
             alpha = 0.9
@@ -84,13 +115,19 @@ def get_sparse_errors(images,train_images, model,z,neighbours_idx,model_type,max
         with tf.device('/cpu:0'): # Because of weird tf memory management it is faster on cpu
             x_hat = model[0](images).numpy()
             z_hat = model[2](x_hat).numpy()
+            z_hat_mean = model[2](m).numpy()
 
         for i,n in enumerate(neighbours_idx):
-            if len(n) ==0: temp = np.array([i])
-            elif len(n) > max_neigh: temp  = n[:max_neigh] 
-            else: temp  = n
+            if len(n) ==0: 
+                temp = np.array([i])
+                zs = z_hat_mean
+            elif len(n) > max_neigh: 
+                temp  = n[:max_neigh] 
+                zs = z[temp.astype(int)]
+            else: 
+                temp  = n
+                zs = z[temp.astype(int)]
 
-            zs = z[temp.astype(int)]
             z_hats = np.stack([z_hat[i]]*temp.shape[-1],axis=0)
             error.append(np.mean(np.abs(zs - z_hats)**2))
 
