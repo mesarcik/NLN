@@ -13,6 +13,7 @@ def process(data,per_image=True):
     """
     output = copy.deepcopy(data)
     if per_image:
+        output = output.astype('float32')
         for i,image in enumerate(data):
             x,y,z = image.shape
             output[i,...] = MinMaxScaler(feature_range=(0,1)
@@ -20,7 +21,8 @@ def process(data,per_image=True):
     else:
         mi, ma = np.min(data), np.max(data)
         output = (data - mi)/(ma -mi)
-    return output.astype('float32')
+        output = output.astype('float32')
+    return output
 
 def resize(data, dim):
     """
