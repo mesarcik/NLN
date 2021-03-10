@@ -1,20 +1,26 @@
 import copy 
+import numpy as np
 from sklearn.preprocessing import MinMaxScaler 
 from skimage import transform 
 
-def process(data):
+def process(data,per_image=True):
     """
         Scales data between 0 and 1 on a per image basis
 
         data (np.array) is either the test or training data
+        per_image (bool) determines if data is processed on a per image basis
 
     """
-    output = copy.deepcopy(data).astype('float32')
-    for i,image in enumerate(data):
-        x,y,z = image.shape
-        output[i,...] = MinMaxScaler(feature_range=(0,1)
-                                      ).fit_transform(image.reshape([x*y,z])).reshape([x,y,z])
-    return output
+    output = copy.deepcopy(data)
+    if per_image:
+        for i,image in enumerate(data):
+            x,y,z = image.shape
+            output[i,...] = MinMaxScaler(feature_range=(0,1)
+                                          ).fit_transform(image.reshape([x*y,z])).reshape([x,y,z])
+    else:
+        mi, ma = np.min(data), np.max(data)
+        output = (data - mi)/(ma -mi)
+    return output.astype('float32')
 
 def resize(data, dim):
     """

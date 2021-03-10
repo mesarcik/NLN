@@ -47,7 +47,7 @@ def get_sparse_errors(images,train_images, model,z,neighbours_idx,model_type,max
                 d = x_hat[temp.astype(int)]
 
             im = np.stack([images[i]]*temp.shape[-1],axis=0)
-            error.append(np.mean(np.abs(d - im)**2))
+            error.append(np.mean(np.abs(d - im)**2,axis=0))
 
     elif model_type == 'DAE':
         with tf.device('/cpu:0'): # Because of weird tf memory management it is faster on cpu
