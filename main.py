@@ -34,10 +34,10 @@ def main():
     print(" __________________________________ \n")
 
     train_dae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
-    train_ganomaly(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
-    train_ae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
-    train_vae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
-    train_aae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
+    #train_ganomaly(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
+    #train_ae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
+    #train_vae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
+    #train_aae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
 
 
 

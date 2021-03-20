@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-from .defaults import mvtec_sizes
+from .defaults import sizes
 
 def get_patched_dataset(train_images, 
                         train_labels, 
@@ -134,7 +134,7 @@ def reconstruct(patches,args, labels=None):
 
     """
     t = patches.transpose(0,2,1,3)
-    n_patches = mvtec_sizes[args.anomaly_class]//args.patch_x
+    n_patches = sizes[str(args.anomaly_class)]//args.patch_x
     recon = np.empty([patches.shape[0]//n_patches**2, args.patch_x*n_patches,args.patch_y*n_patches,patches.shape[-1]])
 
     start, counter, indx, b  = 0, 0, 0, []
@@ -151,9 +151,9 @@ def reconstruct(patches,args, labels=None):
     if labels is not None:
         start, end, labels_recon = 0, args.patch_x**2, []
 
-        for i in range(0, labels.shape[0], args.patch_x**2):
+        for i in range(0, labels.shape[0], n_patches**2):
             if args.anomaly_class in labels[start:end]:
-                labels_recon.append(args.anomaly_class)
+                labels_recon.append(str(args.anomaly_class))
             else:
                 labels_recon.append('non_anomalous')
 

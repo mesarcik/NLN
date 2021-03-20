@@ -5,8 +5,9 @@ from time import time
 import copy
 import pickle
 from sklearn import metrics,neighbors
-from model_loader import get_error
+from model_loader import get_error, get_reconstructed
 from joblib import Parallel, delayed
+from utils.data import reconstruct
 import itertools
 import warnings
 warnings.filterwarnings('ignore')
@@ -47,7 +48,7 @@ def get_sparse_errors(images,train_images, model,z,neighbours_idx,model_type,max
                 d = x_hat[temp.astype(int)]
 
             im = np.stack([images[i]]*temp.shape[-1],axis=0)
-            error.append(np.mean(np.abs(d - im)**2,axis=0))
+            error.append(np.mean(np.abs(d - im)**2))#,axis=0))
 
     elif model_type == 'DAE':
         with tf.device('/cpu:0'): # Because of weird tf memory management it is faster on cpu
@@ -135,7 +136,7 @@ def get_sparse_errors(images,train_images, model,z,neighbours_idx,model_type,max
     return error
 
 
-def get_n_errors(images, model,z,neighbours_idx,model_type,max_neigh=None):
+def knn_nln(test_images, train_images_hat, neighbours_idx, model, model_type, args):
     """
         Gets the error for the KNN enabled NLN 
 
@@ -146,36 +147,15 @@ def get_n_errors(images, model,z,neighbours_idx,model_type,max_neigh=None):
         model_type (str): the type of model (AE,VAE,...)
         max_neigh (int): the maximum number of neightbours (K) if KNN 
     """
-    if max_neigh is None:
-        max_neigh =  max([sublist.shape[0] for sublist in neighbours_idx])
-    images = np.stack([images]*max_neigh,axis=1) 
-    # images of shape (n,32,32,1)->(n,d,32,32,1)
+    if model_type == 'DAE' or model_type == 'DAE_disc': 
+        test_images = np.stack([test_images]*neighbours_idx.shape[-1],axis=1) 
+        neighbours = train_images_hat[neighbours_idx]
+        error = np.mean(np.abs(test_images - neighbours), axis =1)
 
-    if model_type == 'AE' or model_type == 'AAE' or model_type =='VAE':
-        x_hat = np.array([model.decoder(z[n]) for n in neighbours_idx])
-        error = np.abs(images - x_hat)**2
+    if args.patches:
+        error = reconstruct(error, args)
 
-    if model_type == 'DAE':
-        x_hat = np.array([model[0].decoder(z[n]) for n in neighbours_idx])
-        error = np.abs(images - x_hat)**2
-
-    elif model_type == 'GANomaly':
-        zs = np.array([z[n] for n in neighbours_idx])
-        x_hats = np.array([model[0](image) for image in images])
-        z_hats = np.array([model[2](x_hat) for x_hat in x_hats])
-        error = tf.square(tf.subtract(z_hats, zs)).numpy()
-
-    elif model_type == 'BIGAN':
-        # Note this is not using the discriminator error
-        x_hat = np.array([model[1].decoder(z[n]) for n in neighbours_idx])
-        error = tf.square(tf.subtract(images, x_hat)).numpy()
-
-    elif model_type == 'GPND' or model_type == 'VAEGAN':
-        # Note this is not using the discriminator error
-        x_hat = np.array([model[0].decoder(z[n]) for n in neighbours_idx])
-        error = tf.square(tf.subtract(images, x_hat)).numpy()
-
-    error =  np.nanmean(error,axis=tuple(range(1,error.ndim)))
+    error =  np.mean(error,axis=tuple(range(1,error.ndim)))
     return error
 
 def nearest_error(model,
@@ -197,17 +177,27 @@ def nearest_error(model,
         hera (bool): if we use HERA
 
     """
+    #if args.patches:## sample training_set for KNN
+    #    inds = np.random.choice(np.arange(len(train_images)), 20000, replace=False)
+    #    train_images = train_images[inds] 
+        
 
     # inefficent, only need z
     z_query,error_query = get_error(model_type,model,test_images,return_z = True)
     with tf.device('/cpu:0'): # GPU cant handle the full training set :(
         z,_ = get_error(model_type,model,train_images,return_z = True)
+        train_images_hat = get_reconstructed(model_type, model, train_images)
 
     d,max_auc,max_f1,max_neighbours,max_radius,index_counter = {},0,0,0,0,0
     z_query = z_query.numpy()
     z = z.numpy()
     
+    _,test_labels = reconstruct(test_images, args, test_labels)
+    (_, _), (_, test_labels) = tf.keras.datasets.cifar10.load_data()
+    test_labels = test_labels[:args.limit,0] #because cifar labels are weird
+
     for n_bour in args.neighbors:
+        print('getting KNN of {}'.format(n_bour))
         if args.algorithm == 'knn':
             t = time()
 
@@ -216,7 +206,14 @@ def nearest_error(model,
                                               n_jobs=-1).fit(z) # using KNN
 
             neighbours_idx =  nbrs.kneighbors(z_query,return_distance=False)#KNN
-            error = get_n_errors(test_images,model,z,neighbours_idx,model_type)
+
+            error = knn_nln(test_images,
+                            train_images_hat, 
+                            neighbours_idx,
+                            model,
+                            model_type,
+                            args)
+
             temp_args = [error,test_labels,args.anomaly_class,hera,args.neighbors,
                          [float('nan')],n_bour,float('nan'), max_auc,max_f1,max_neighbours,
                           max_radius,index_counter,d,t]

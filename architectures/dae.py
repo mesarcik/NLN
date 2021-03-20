@@ -70,9 +70,9 @@ def train(ae,discriminator, train_dataset,test_images,test_labels,args):
     for epoch in range(args.epochs):
         start = time.time()
         for image_batch in train_dataset:
-           auto_loss,disc_loss,gen_loss  =  train_step(ae, 
-                                                       discriminator, 
-                                                       image_batch)
+            auto_loss,disc_loss,gen_loss  =  train_step(ae, 
+                                                        discriminator, 
+                                                        image_batch)
 
         generate_and_save_images(ae,
                                  epoch + 1,
@@ -87,12 +87,12 @@ def train(ae,discriminator, train_dataset,test_images,test_labels,args):
         d_loss.append(disc_loss)
         g_loss.append(gen_loss)
 
-        roc_auc,f1 = get_classifcation('DAE_disc',
-                                       [ae,discriminator],
-                                       test_images,
-                                       test_labels,
-                                       args.anomaly_class,
-                                       hera=args.data=='HERA')
+        roc_auc,f1 = 0,0# get_classifcation('DAE_disc',
+                        #               [ae,discriminator],
+                        #               test_images,
+                        #               test_labels,
+                        #               args.anomaly_class,
+                        #               hera=args.data=='HERA')
         aucs.append(roc_auc)
 
         print_epoch('DAE_disc',
@@ -141,7 +141,8 @@ def main(train_dataset,train_images,train_labels,test_images,test_labels,args):
                                              test_labels,
                                              args.anomaly_class,
                                              hera = args.data == 'HERA',
-                                             f1=True)
+                                             f1=True,
+                                             args =args)
     save_metrics('DAE_disc',
                  args,
                  auc_recon, 

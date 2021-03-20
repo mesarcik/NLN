@@ -6,6 +6,7 @@ from sklearn.metrics import roc_curve, auc, f1_score
 from math import isnan
 from model_loader import get_error
 from utils import cmd_input 
+from utils.data import reconstruct
 
 
 def calculate_metrics(error,  
@@ -47,7 +48,8 @@ def get_classifcation(model_type,
                       test_labels,
                       anomaly,
                       hera=False,
-                      f1=False):
+                      f1=False,
+                      args=None):
     """
         Returns the AUROC and F1 score of a particular model 
 
@@ -61,7 +63,21 @@ def get_classifcation(model_type,
 
     """
 
-    error = get_error(model_type,model,test_images)
+    if args is None:
+        error = get_error(model_type,model,test_images)
+
+    else:
+        with tf.device('/cpu:0'): 
+            model_output = model[0](test_images)
+            z = model[0].encoder(test_images)
+            error = np.abs(test_images -  model_output.numpy())
+            error, _ = reconstruct(error, args, test_labels)
+            error =  np.mean(error,axis=tuple(range(1,error.ndim)))
+
+        _,test_labels = reconstruct(test_images, args, test_labels)
+        (_, _), (_, test_labels) = tf.keras.datasets.cifar10.load_data()
+        test_labels = test_labels[:args.limit,0] #because cifar labels are weird
+
     auc,f1 = calculate_metrics(error,test_labels,anomaly,hera,f1)
     return auc,f1
 
