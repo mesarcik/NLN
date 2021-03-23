@@ -6,6 +6,7 @@ from sklearn.metrics import roc_curve, auc, f1_score
 from math import isnan
 from model_loader import get_error
 from utils import cmd_input 
+from utils.data import reconstruct
 
 
 def calculate_metrics(error,  
@@ -45,7 +46,7 @@ def get_classifcation(model_type,
                       model,
                       test_images,
                       test_labels,
-                      anomaly,
+                      args,
                       hera=False,
                       f1=False):
     """
@@ -55,14 +56,27 @@ def get_classifcation(model_type,
         model (tf.keras.Model): the model used
         test_images (np.array): the test images from the testing set
         test_labels (np.array): the test labels from the testing set
-        anomaly (int): the anomlous class label
+        args (Namespace):  arguments from utils.cmd_input
         hera (bool): if the HERA training set is used
         f1 (bool): return f1 score?
 
     """
+    if args.patches :
+        with tf.device('/cpu:0'): 
+            model_output = model[0](test_images)
+            z = model[0].encoder(test_images)
+        error = np.abs(test_images -  model_output.numpy())
+        error, test_labels = reconstruct(error, args, test_labels)
+        error =  np.mean(error,axis=tuple(range(1,error.ndim)))
 
-    error = get_error(model_type,model,test_images)
-    auc,f1 = calculate_metrics(error,test_labels,anomaly,hera,f1)
+        if args.dataset == 'CIFAR10':
+            (_, _), (_, test_labels) = tf.keras.datasets.cifar10.load_data()
+            test_labels = test_labels[:args.limit,0] #because cifar labels are weird
+
+    else:
+        error = get_error(model_type,model,test_images)
+
+    auc,f1 = calculate_metrics(error,test_labels,args.anomaly_class,hera,f1)
     return auc,f1
 
 def save_metrics(model_type,

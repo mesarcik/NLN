@@ -5,8 +5,9 @@ from time import time
 import copy
 import pickle
 from sklearn import metrics,neighbors
-from model_loader import get_error
+from model_loader import get_error, get_reconstructed
 from joblib import Parallel, delayed
+from utils.data import reconstruct, reconstruct_latent_patches
 import itertools
 import warnings
 warnings.filterwarnings('ignore')
@@ -28,53 +29,84 @@ def get_sparse_errors(images,train_images, model,z,neighbours_idx,model_type,max
     """
     #TODO All of these methods are super inefficient
     error = []
+    m = np.expand_dims(np.mean(images,axis=0),axis=0)
+
     if model_type == 'AE' or model_type == 'AAE' or model_type =='VAE': 
 
         with tf.device('/cpu:0'): # Because of weird tf memory management it is faster on cpu
             x_hat= model.decoder(z).numpy()
 
         for i,n in enumerate(neighbours_idx):
-            if len(n) ==0: temp = np.array([i])
-            elif len(n) > max_neigh: temp  = n[:max_neigh] 
-            else: temp  = n
+            if len(n) ==0: 
+                temp = np.array([i])
+                d = m 
+            elif len(n) > max_neigh: 
+                temp  = n[:max_neigh] 
+                d = x_hat[temp.astype(int)]
+            else: 
+                temp  = n
+                d = x_hat[temp.astype(int)]
 
-            d = x_hat[temp.astype(int)]
             im = np.stack([images[i]]*temp.shape[-1],axis=0)
-            error.append(np.mean(np.abs(d - im)**2))
+            error.append(np.mean(np.abs(d - im)**2))#,axis=0))
 
     elif model_type == 'DAE':
         with tf.device('/cpu:0'): # Because of weird tf memory management it is faster on cpu
             x_hat= model[0].decoder(z).numpy()
 
         for i,n in enumerate(neighbours_idx):
-            if len(n) ==0: temp = np.array([i])
-            elif len(n) > max_neigh: temp  = n[:max_neigh] 
-            else: temp  = n
+            if len(n) ==0: 
+                temp = np.array([i])
+                d = m
+            elif len(n) > max_neigh: 
+                temp  = n[:max_neigh] 
+                d = x_hat[temp.astype(int)]
+            else: 
+                temp  = n
+                d = x_hat[temp.astype(int)]
 
-            d = x_hat[temp.astype(int)]
             im = np.stack([images[i]]*temp.shape[-1],axis=0)
             error.append(np.mean(np.abs(d - im)**2))
 
     elif model_type == 'DAE_disc':
         with tf.device('/cpu:0'): # Because of weird tf memory management it is faster on cpu
             x_hat= model[0].decoder(z).numpy()
+
             d_x_hat, _ = model[1](x_hat)
+            d_x_hat_m, _ = model[1](m)
+
             d_x, _ = model[1](train_images)
+            d_x_m, _ = model[1](m)
 
             d_x_hat = d_x_hat.numpy()
+            d_x_hat_m = d_x_hat_m.numpy()
+
             d_x = d_x.numpy()
+            d_x_m = d_x_m.numpy()
 
         for i,n in enumerate(neighbours_idx):
-            if len(n) ==0: temp = np.array([i])
-            elif len(n) > max_neigh: temp  = n[:max_neigh] 
-            else: temp  = n
+            if len(n) ==0: 
+                temp = np.array([i])
+                x_hats = m 
+                d_x_hats = d_x_hat_m 
+                d_xs = d_x_m
 
-            x_hats = x_hat[temp.astype(int)]
+            elif len(n) > max_neigh: 
+                temp  = n[:max_neigh] 
+                x_hats = x_hat[temp.astype(int)]
+                d_x_hats = d_x_hat[temp.astype(int)]
+                d_xs = d_x[temp.astype(int)]
+
+            else: 
+                temp  = n
+                x_hats = x_hat[temp.astype(int)]
+                d_x_hats = d_x_hat[temp.astype(int)]
+                d_xs = d_x[temp.astype(int)]
+
+
             ims = np.stack([images[i]]*temp.shape[-1],axis=0)
             reconstruction_error = np.mean(np.abs(x_hats - ims)**2)
 
-            d_x_hats = d_x_hat[temp.astype(int)]
-            d_xs = d_x[temp.astype(int)]
             discriminator_error  = np.mean(np.abs(d_x_hats  - d_xs)**2)
 
             alpha = 0.9
@@ -84,13 +116,19 @@ def get_sparse_errors(images,train_images, model,z,neighbours_idx,model_type,max
         with tf.device('/cpu:0'): # Because of weird tf memory management it is faster on cpu
             x_hat = model[0](images).numpy()
             z_hat = model[2](x_hat).numpy()
+            z_hat_mean = model[2](m).numpy()
 
         for i,n in enumerate(neighbours_idx):
-            if len(n) ==0: temp = np.array([i])
-            elif len(n) > max_neigh: temp  = n[:max_neigh] 
-            else: temp  = n
+            if len(n) ==0: 
+                temp = np.array([i])
+                zs = z_hat_mean
+            elif len(n) > max_neigh: 
+                temp  = n[:max_neigh] 
+                zs = z[temp.astype(int)]
+            else: 
+                temp  = n
+                zs = z[temp.astype(int)]
 
-            zs = z[temp.astype(int)]
             z_hats = np.stack([z_hat[i]]*temp.shape[-1],axis=0)
             error.append(np.mean(np.abs(zs - z_hats)**2))
 
@@ -98,7 +136,7 @@ def get_sparse_errors(images,train_images, model,z,neighbours_idx,model_type,max
     return error
 
 
-def get_n_errors(images, model,z,neighbours_idx,model_type,max_neigh=None):
+def knn_nln(test_images,z_train, train_images_hat, neighbours_idx, model, model_type, args):
     """
         Gets the error for the KNN enabled NLN 
 
@@ -109,36 +147,27 @@ def get_n_errors(images, model,z,neighbours_idx,model_type,max_neigh=None):
         model_type (str): the type of model (AE,VAE,...)
         max_neigh (int): the maximum number of neightbours (K) if KNN 
     """
-    if max_neigh is None:
-        max_neigh =  max([sublist.shape[0] for sublist in neighbours_idx])
-    images = np.stack([images]*max_neigh,axis=1) 
-    # images of shape (n,32,32,1)->(n,d,32,32,1)
+    if model_type != 'GANomaly': 
+        test_images = np.stack([test_images]*neighbours_idx.shape[-1],axis=1) 
+        neighbours = train_images_hat[neighbours_idx]
+        error = np.mean(np.abs(test_images - neighbours), axis =1)
 
-    if model_type == 'AE' or model_type == 'AAE' or model_type =='VAE':
-        x_hat = np.array([model.decoder(z[n]) for n in neighbours_idx])
-        error = np.abs(images - x_hat)**2
+    if model_type == 'GANomaly': 
+        with tf.device('/cpu:0'): # GPU cant handle the full training set :(
+            z_test = model[0].encoder(test_images).numpy() 
+            z_train_encoder = model[2](train_images_hat).numpy()
 
-    if model_type == 'DAE':
-        x_hat = np.array([model[0].decoder(z[n]) for n in neighbours_idx])
-        error = np.abs(images - x_hat)**2
+        z_test = np.stack([z_test]*neighbours_idx.shape[-1],axis=1) 
+        neighbours = z_train_encoder[neighbours_idx]
+        error = np.mean(np.abs(z_test- neighbours), axis =1)
 
-    elif model_type == 'GANomaly':
-        zs = np.array([z[n] for n in neighbours_idx])
-        x_hats = np.array([model[0](image) for image in images])
-        z_hats = np.array([model[2](x_hat) for x_hat in x_hats])
-        error = tf.square(tf.subtract(z_hats, zs)).numpy()
+    if args.patches:
+        if model_type != 'GANomaly':
+            error = reconstruct(error, args)
+        else:
+            error = reconstruct_latent_patches(error, args)
 
-    elif model_type == 'BIGAN':
-        # Note this is not using the discriminator error
-        x_hat = np.array([model[1].decoder(z[n]) for n in neighbours_idx])
-        error = tf.square(tf.subtract(images, x_hat)).numpy()
-
-    elif model_type == 'GPND' or model_type == 'VAEGAN':
-        # Note this is not using the discriminator error
-        x_hat = np.array([model[0].decoder(z[n]) for n in neighbours_idx])
-        error = tf.square(tf.subtract(images, x_hat)).numpy()
-
-    error =  np.nanmean(error,axis=tuple(range(1,error.ndim)))
+    error =  np.mean(error,axis=tuple(range(1,error.ndim)))
     return error
 
 def nearest_error(model,
@@ -160,17 +189,27 @@ def nearest_error(model,
         hera (bool): if we use HERA
 
     """
+    #if args.patches:## sample training_set for KNN
+    #    inds = np.random.choice(np.arange(len(train_images)), 20000, replace=False)
+    #    train_images = train_images[inds] 
+        
 
     # inefficent, only need z
     z_query,error_query = get_error(model_type,model,test_images,return_z = True)
     with tf.device('/cpu:0'): # GPU cant handle the full training set :(
         z,_ = get_error(model_type,model,train_images,return_z = True)
+        train_images_hat = get_reconstructed(model_type, model, train_images)
 
     d,max_auc,max_f1,max_neighbours,max_radius,index_counter = {},0,0,0,0,0
     z_query = z_query.numpy()
     z = z.numpy()
     
+    #_,test_labels = reconstruct(test_images, args, test_labels)
+    #(_, _), (_, test_labels) = tf.keras.datasets.cifar10.load_data()
+    #test_labels = test_labels[:args.limit,0] #because cifar labels are weird
+
     for n_bour in args.neighbors:
+        print('getting KNN of {}'.format(n_bour))
         if args.algorithm == 'knn':
             t = time()
 
@@ -179,7 +218,15 @@ def nearest_error(model,
                                               n_jobs=-1).fit(z) # using KNN
 
             neighbours_idx =  nbrs.kneighbors(z_query,return_distance=False)#KNN
-            error = get_n_errors(test_images,model,z,neighbours_idx,model_type)
+
+            error = knn_nln(test_images,
+                            z, 
+                            train_images_hat, 
+                            neighbours_idx,
+                            model,
+                            model_type,
+                            args)
+
             temp_args = [error,test_labels,args.anomaly_class,hera,args.neighbors,
                          [float('nan')],n_bour,float('nan'), max_auc,max_f1,max_neighbours,
                           max_radius,index_counter,d,t]

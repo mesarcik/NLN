@@ -17,14 +17,16 @@ discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
 encoder_optimizer = tf.keras.optimizers.Adam(1e-4)
 
 def ae_loss(x,x_hat,loss_weight):
-    return loss_weight*tf.reduce_mean(tf.math.abs(tf.subtract(x, x_hat)))
+    return loss_weight*tf.reduce_mean(tf.math.abs(tf.subtract(x, 
+                                                              x_hat)))
 
 def discriminator_loss(real_output, fake_output,loss_weight):
-    return loss_weight*tf.reduce_mean(tf.square(tf.subtract(real_output, 
-                                                            fake_output)))
+    return loss_weight*tf.reduce_mean(tf.math.abs(tf.subtract(real_output, 
+                                                              fake_output)))
 
 def encoder_loss(z,z_hat, loss_weight):
-    return loss_weight*tf.reduce_mean(tf.square(tf.subtract(z, z_hat)))
+    return loss_weight*tf.reduce_mean(tf.math.abs(tf.subtract(z, 
+                                                              z_hat)))
 
 @tf.function
 def train_step(ae,encoder,discriminator,images):
@@ -72,27 +74,19 @@ def train(ae,encoder,discriminator,dataset,test_images,test_labels, args):
         e_loss.append(encoder_loss)
         d_loss.append(disc_loss)
 
-        roc_auc,f1 = get_classifcation('GANomaly',
-                                        [ae,discriminator,encoder],
-                                        test_images,
-                                        test_labels,
-                                        args.anomaly_class,
-                                        hera=args.data=='HERA')
-        aucs.append(roc_auc)
         print_epoch('GANomaly',
                     epoch,
                     time.time()-start,
                     {'AE Loss':auto_loss.numpy(),
                      'Discriminator loss': disc_loss.numpy(),
                      'Encoder loss':encoder_loss.numpy()},
-                    roc_auc)
+                    None)
 
 
-    generate_and_save_training([ae_loss,d_loss,e_loss,aucs],
+    generate_and_save_training([ae_loss,d_loss,e_loss],
                                 ['ae loss', 
                                 'discriminator loss', 
-                                'encoder loss',
-                                'AUC'],
+                                'encoder loss'],
                                 'GANomaly',
                                 args)
 
@@ -131,7 +125,7 @@ def main(train_dataset,train_images,train_labels,test_images,test_labels,args):
                                              [ae,discriminator,encoder],
                                              test_images,
                                              test_labels,
-                                             args.anomaly_class,
+                                             args,
                                              hera = args.data == 'HERA',
                                              f1=True)
     save_metrics('GANomaly',

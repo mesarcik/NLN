@@ -12,8 +12,8 @@ from model_config import BUFFER_SIZE,BATCH_SIZE,cross_entropy
 optimizer = tf.keras.optimizers.Adam()#1e-4)
 
 def l2_loss(x,x_hat):
-    return cross_entropy(tf.keras.backend.flatten(x),
-                        tf.keras.backend.flatten(x_hat))
+    return tf.reduce_sum(tf.math.abs(tf.subtract(tf.keras.backend.flatten(x),
+                                  tf.keras.backend.flatten(x_hat))))
 
 def KL_loss(logvar, mean):
     kl_loss = 1 + logvar - tf.square(mean) - tf.exp(logvar)
@@ -56,14 +56,8 @@ def train(vae,train_dataset,test_images,test_labels,args):
 
         save_checkpoint(vae,epoch,args,'VAE','ae')
 
-        roc_auc,f1 = get_classifcation('VAE',
-                                        vae,
-                                        test_images,
-                                        test_labels,
-                                        args.anomaly_class,
-                                        hera=args.data=='HERA')
         ae_loss.append(auto_loss)
-        print_epoch('VAE',epoch,time.time()-start,{'AE Loss':auto_loss.numpy()},roc_auc)
+        print_epoch('VAE',epoch,time.time()-start,{'AE Loss':auto_loss.numpy()},None)
     generate_and_save_training([ae_loss],
                                 ['ae loss'],
                                 'VAE',args)
@@ -87,7 +81,7 @@ def main(train_dataset,train_images,train_labels,test_images,test_labels,args):
                                              vae,
                                              test_images,
                                              test_labels,
-                                             args.anomaly_class,
+                                             args,
                                              hera = args.data == 'HERA',
                                              f1=True)
     save_metrics('VAE',

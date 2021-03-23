@@ -60,7 +60,7 @@ def generate_and_save_images(model, epoch, test_input,name,args):
           plt.imshow(predictions[i, :, :, 0] * 127.5 + 127.5)
 
       if predictions.shape[-1] == 3: #RGB
-          plt.imshow(predictions[i,...])
+          plt.imshow(predictions[i,...], vmin=0, vmax=1)
       plt.axis('off')
     
     if not os.path.exists('outputs/{}/{}/{}/epochs/'.format(name,
@@ -107,9 +107,9 @@ def save_training_curves(model,args,test_images,test_labels,name):
             ax[i,1].imshow(model_output[ind,...,0]);  
             ax[i,2].imshow(test_images[ind,...,0] - model_output[ind,...,0]);
         if test_images.shape[-1] == 3: #RGB
-            ax[i,0].imshow(test_images[ind,...]);
-            ax[i,1].imshow(model_output[ind,...]);  
-            ax[i,2].imshow(test_images[ind,...] - model_output[ind,...]);
+            ax[i,0].imshow(test_images[ind,...],vmin =0, vmax=1);
+            ax[i,1].imshow(model_output[ind,...],vmin=0, vmax=1);  
+            ax[i,2].imshow(test_images[ind,...] - model_output[ind,...],vmin=0, vmax=1);
 
         ax[i,0].title.set_text(lbl)
         ax[i,1].title.set_text(error[ind].mean())

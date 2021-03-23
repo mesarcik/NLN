@@ -19,7 +19,8 @@ discriminator_optimizer = tf.keras.optimizers.Adam(1e-5)
 generator_optimizer = tf.keras.optimizers.Adam(1e-5)
 
 def ae_loss(x,x_hat):
-    return cross_entropy(x,x_hat)
+    return tf.reduce_mean(tf.math.abs(tf.subtract(x, 
+                                                  x_hat)))
 
 def discriminator_loss(real_output, fake_output,loss_weight):
     real_loss =  cross_entropy(tf.ones_like(real_output), real_output)
@@ -65,13 +66,13 @@ def train_step(ae,discriminator, x):
     return auto_loss,disc_loss,gen_loss
 
 def train(ae,discriminator, train_dataset,test_images,test_labels,args):
-    ae_loss,d_loss, g_loss,aucs = [], [], [],[]
+    ae_loss,d_loss, g_loss= [], [], []
     for epoch in range(args.epochs):
         start = time.time()
         for image_batch in train_dataset:
-           auto_loss,disc_loss,gen_loss  =  train_step(ae, 
-                                                       discriminator, 
-                                                       image_batch)
+            auto_loss,disc_loss,gen_loss  =  train_step(ae, 
+                                                        discriminator, 
+                                                        image_batch)
 
         generate_and_save_images(ae,
                                  epoch + 1,
@@ -86,13 +87,6 @@ def train(ae,discriminator, train_dataset,test_images,test_labels,args):
         d_loss.append(disc_loss)
         g_loss.append(gen_loss)
 
-        roc_auc,f1 = get_classifcation('DAE_disc',
-                                       [ae,discriminator],
-                                       test_images,
-                                       test_labels,
-                                       args.anomaly_class,
-                                       hera=args.data=='HERA')
-        aucs.append(roc_auc)
 
         print_epoch('DAE_disc',
                      epoch,
@@ -100,10 +94,10 @@ def train(ae,discriminator, train_dataset,test_images,test_labels,args):
                      {'AE Loss':auto_loss.numpy(),
                       'Discrimator Loss':disc_loss.numpy(),
                       'Generator Loss':gen_loss.numpy()},
-                     roc_auc)
+                     None)
 
-    generate_and_save_training([ae_loss,d_loss,g_loss,aucs],
-                                ['ae loss','disc loss','gen loss','AUC'],
+    generate_and_save_training([ae_loss,d_loss,g_loss],
+                                ['ae loss','disc loss','gen loss'],
                                 'DAE_disc',args)
 
     generate_and_save_images(ae,epoch,image_batch[:25,...],'DAE_disc',args)
@@ -138,9 +132,10 @@ def main(train_dataset,train_images,train_labels,test_images,test_labels,args):
                                              [ae,discriminator],
                                              test_images,
                                              test_labels,
-                                             args.anomaly_class,
+                                             args,
                                              hera = args.data == 'HERA',
-                                             f1=True)
+                                             f1=True,
+                                             args =args)
     save_metrics('DAE_disc',
                  args,
                  auc_recon, 

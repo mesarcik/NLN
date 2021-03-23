@@ -16,7 +16,9 @@ from model_config import *
 optimizer = tf.keras.optimizers.Adam()
 
 def l2_loss(x,x_hat):
-    return cross_entropy(x,x_hat)
+
+    return tf.reduce_mean(tf.math.abs(tf.subtract(x,x_hat)))
+
 
 @tf.function
 def train_step(model, x):
@@ -33,11 +35,11 @@ def train_step(model, x):
     return loss
 
 def train(ae,train_dataset,test_images,test_labels,args,verbose=True,save=True):
-    ae_loss,aucs = [], []
+    ae_loss= []
     for epoch in range(args.epochs):
         start = time.time()
         for image_batch in train_dataset:
-           auto_loss  =  train_step(ae,image_batch)
+            auto_loss  =  train_step(ae,image_batch)
 
         generate_and_save_images(ae,
                                  epoch + 1,
@@ -47,18 +49,11 @@ def train(ae,train_dataset,test_images,test_labels,args,verbose=True,save=True):
         save_checkpoint(ae,epoch, args,'AE','ae')
 
         ae_loss.append(auto_loss)
-        roc_auc,f1 = get_classifcation('AE',
-                                        ae,
-                                       test_images,
-                                       test_labels,
-                                       args.anomaly_class,
-                                       hera=args.data=='HERA')
-        aucs.append(roc_auc)
 
-        print_epoch('AE',epoch,time.time()-start,{'AE Loss':auto_loss.numpy()},roc_auc)
+        print_epoch('AE',epoch,time.time()-start,{'AE Loss':auto_loss.numpy()},None)
 
-    generate_and_save_training([ae_loss,aucs],
-                                ['ae loss','AUC'],
+    generate_and_save_training([ae_loss],
+                                ['ae loss'],
                                 'AE',args)
     generate_and_save_images(ae,epoch,image_batch[:25,...],'AE',args)
 
@@ -80,7 +75,7 @@ def main(train_dataset,train_images,train_labels,test_images,test_labels,args):
                                              ae,
                                              test_images,
                                              test_labels,
-                                             args.anomaly_class,
+                                             args,
                                              hera = args.data == 'HERA',
                                              f1=True)
     save_metrics('AE',

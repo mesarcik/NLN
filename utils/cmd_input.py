@@ -27,8 +27,30 @@ parser.add_argument('-data', metavar='-d', type=str, default='MNIST',
 parser.add_argument('-seed', metavar='-s', type=str, 
                     help = 'The random seed used for naming output files')
 
+parser.add_argument('-rotate', metavar='-rot', type=bool,default=False, 
+                    help = 'Train on rotated augmentations?')
+
+parser.add_argument('-crop', metavar='-cr', type=bool,default=False, 
+                    help = 'Train on crops?')
+parser.add_argument('-crop_x', metavar='-cx', type=int,default=7, 
+                    help = 'x-dimension of crop')
+parser.add_argument('-crop_y', metavar='-cy', type=int,default=7, 
+                    help = 'y-dimension of crop')
+
+parser.add_argument('-patches', metavar='-ptch', type=bool,default=False, 
+                    help = 'Train on patches?')
+parser.add_argument('-patch_x', metavar='-px', type=int,default=7, 
+                    help = 'x-dimension of patchsize ')
+parser.add_argument('-patch_y', metavar='-py', type=int, default=7,
+                    help = 'y-dimension of patchsize ')
+parser.add_argument('-patch_stride_x', metavar='-psx', type=int, default=7,
+                    help = 'x-dimension of strides of patches')
+parser.add_argument('-patch_stride_y', metavar='-psy', type=int, default=7,
+                    help = 'y-dimension of strides of patches')
+
 args = parser.parse_args()
 args.model_name = new_name()
+
 
 if args.data == 'MNIST' or args.data == 'FASHION_MNIST':
     args.input_shape =(28,28,1)
@@ -43,6 +65,12 @@ elif args.data == 'MVTEC':
         args.input_shape =(256,256,1)
     else:
         args.input_shape =(256,256,3)
+
+if args.patches:
+    args.input_shape = (args.patch_x,args.patch_y,args.input_shape[-1])
+
+if args.crop:
+    args.input_shape = (args.crop_x,args.crop_y,args.input_shape[-1])
 
 if args.limit == 'None':
     args.limit = None
