@@ -55,7 +55,7 @@ def train_step(ae,discriminator,images,latent_dim):
     return auto_loss, disc_loss,gen_loss
 
 def train(ae,discriminator,train_dataset,test_images,test_labels,args):
-    ae_loss, d_loss,g_loss,aucs = [],[],[],[]
+    ae_loss, d_loss,g_loss= [],[],[]
     for epoch in range(args.epochs):
         start = time.time()
 
@@ -69,20 +69,13 @@ def train(ae,discriminator,train_dataset,test_images,test_labels,args):
         ae_loss.append(auto_loss)
         d_loss.append(disc_loss)
         g_loss.append(gen_loss)
-        auc,f1 = get_classifcation('AAE',
-                                    ae,
-                                    test_images,
-                                    test_labels,
-                                    args.anomaly_class,
-                                    hera=args.data=='HERA')
-        aucs.append(auc)
 
         print_epoch('AAE',epoch,time.time()-start,{'AE Loss':auto_loss.numpy(),
                                                   'Discriminator loss': disc_loss.numpy(),
-                                                  'Generator loss':gen_loss.numpy()},auc)
+                                                  'Generator loss':gen_loss.numpy()},None)
 
-    generate_and_save_training([ae_loss,d_loss,g_loss,aucs],
-                                ['ae loss', 'discriminator loss', 'generator loss','AUC'],
+    generate_and_save_training([ae_loss,d_loss,g_loss],
+                                ['ae loss', 'discriminator loss', 'generator loss'],
                                 'AAE',args)
     generate_and_save_images(ae,args.epochs,image_batch[:25,...],'AAE',args)
     return ae
@@ -110,7 +103,7 @@ def main(train_dataset,train_images,train_labels,test_images,test_labels,args):
                                               ae,
                                               test_images,
                                               test_labels,
-                                              args.anomaly_class,
+                                              args,
                                               hera = args.data == 'HERA',
                                               f1=True)
     save_metrics('AAE',

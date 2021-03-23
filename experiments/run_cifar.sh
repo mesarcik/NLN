@@ -7,9 +7,9 @@ percentage=0.0
 seed=$(openssl rand -hex 3)
 d=$(date +'%m-%d-%Y-%I-%M_')
 
-for i in $(seq 1 9)
+for i in $(seq 0 9)
 	do
-	for ld in 500
+	for ld in 512
 		do
 				python -u main.py -limit $limit \
 							      -anomaly_class $i \
@@ -17,13 +17,8 @@ for i in $(seq 1 9)
 							      -epochs $epochs \
 							      -latent_dim $ld \
 							      -data CIFAR10\
-							      -neighbors 2 5 10 \
+							      -neighbors 1 2 5 10 \
 							      -algorithm knn\
-								  -patches True\
-								  -patch_x 8\
-								  -patch_y 8\
-								  -patch_stride_x 8\
-								  -patch_stride_y 8\
 								  -seed $d$seed | tee -a cifar.log 
 									
 		done

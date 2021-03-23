@@ -164,3 +164,20 @@ def reconstruct(patches,args, labels=None):
     else:
         return recon
 
+def reconstruct_latent_patches(patches, args):
+    """
+        Reconstruction method for feature consistent autoencoding
+
+        patches (np.array): patches correspodning to the latent projection 
+    """
+    
+    n_patches = sizes[str(args.anomaly_class)]//args.patch_x
+    recon = np.empty([patches.shape[0]//n_patches**2, n_patches**2, patches.shape[-1]])
+
+    start, end, labels_recon = 0, n_patches**2, []
+
+    for j,i in enumerate(range(0, patches.shape[0], n_patches**2)):
+        recon[j,...] = patches[start:end,...]
+        start = end
+        end += n_patches**2 
+    return recon

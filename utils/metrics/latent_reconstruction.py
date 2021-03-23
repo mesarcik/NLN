@@ -7,7 +7,7 @@ import pickle
 from sklearn import metrics,neighbors
 from model_loader import get_error, get_reconstructed
 from joblib import Parallel, delayed
-from utils.data import reconstruct
+from utils.data import reconstruct, reconstruct_latent_patches
 import itertools
 import warnings
 warnings.filterwarnings('ignore')
@@ -136,7 +136,7 @@ def get_sparse_errors(images,train_images, model,z,neighbours_idx,model_type,max
     return error
 
 
-def knn_nln(test_images, train_images_hat, neighbours_idx, model, model_type, args):
+def knn_nln(test_images,z_train, train_images_hat, neighbours_idx, model, model_type, args):
     """
         Gets the error for the KNN enabled NLN 
 
@@ -147,13 +147,25 @@ def knn_nln(test_images, train_images_hat, neighbours_idx, model, model_type, ar
         model_type (str): the type of model (AE,VAE,...)
         max_neigh (int): the maximum number of neightbours (K) if KNN 
     """
-    if model_type == 'DAE' or model_type == 'DAE_disc': 
+    if model_type != 'GANomaly': 
         test_images = np.stack([test_images]*neighbours_idx.shape[-1],axis=1) 
         neighbours = train_images_hat[neighbours_idx]
         error = np.mean(np.abs(test_images - neighbours), axis =1)
 
+    if model_type == 'GANomaly': 
+        with tf.device('/cpu:0'): # GPU cant handle the full training set :(
+            z_test = model[0].encoder(test_images).numpy() 
+            z_train_encoder = model[2](train_images_hat).numpy()
+
+        z_test = np.stack([z_test]*neighbours_idx.shape[-1],axis=1) 
+        neighbours = z_train_encoder[neighbours_idx]
+        error = np.mean(np.abs(z_test- neighbours), axis =1)
+
     if args.patches:
-        error = reconstruct(error, args)
+        if model_type != 'GANomaly':
+            error = reconstruct(error, args)
+        else:
+            error = reconstruct_latent_patches(error, args)
 
     error =  np.mean(error,axis=tuple(range(1,error.ndim)))
     return error
@@ -192,9 +204,9 @@ def nearest_error(model,
     z_query = z_query.numpy()
     z = z.numpy()
     
-    _,test_labels = reconstruct(test_images, args, test_labels)
-    (_, _), (_, test_labels) = tf.keras.datasets.cifar10.load_data()
-    test_labels = test_labels[:args.limit,0] #because cifar labels are weird
+    #_,test_labels = reconstruct(test_images, args, test_labels)
+    #(_, _), (_, test_labels) = tf.keras.datasets.cifar10.load_data()
+    #test_labels = test_labels[:args.limit,0] #because cifar labels are weird
 
     for n_bour in args.neighbors:
         print('getting KNN of {}'.format(n_bour))
@@ -208,6 +220,7 @@ def nearest_error(model,
             neighbours_idx =  nbrs.kneighbors(z_query,return_distance=False)#KNN
 
             error = knn_nln(test_images,
+                            z, 
                             train_images_hat, 
                             neighbours_idx,
                             model,
