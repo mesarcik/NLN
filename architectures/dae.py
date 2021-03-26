@@ -11,7 +11,7 @@ from utils.plotting  import  (generate_and_save_images,
                              save_training_curves)
 
 from utils.training import print_epoch,save_checkpoint
-from utils.metrics import get_classifcation,nearest_error,save_metrics
+from utils.metrics import get_classifcation,nearest_error,save_metrics, accuracy_metrics
 from model_config import *
 
 ae_optimizer = tf.keras.optimizers.Adam()#1e-5)
@@ -104,7 +104,7 @@ def train(ae,discriminator, train_dataset,test_images,test_labels,args):
 
     return ae,discriminator
 
-def main(train_dataset,train_images,train_labels,test_images,test_labels,args):
+def main(train_dataset,train_images, train_labels, test_images, test_labels, test_masks, args):
     ae = Autoencoder(args)
     discriminator = Discriminator_x(args)
     ae, discriminator = train(ae,
@@ -134,8 +134,7 @@ def main(train_dataset,train_images,train_labels,test_images,test_labels,args):
                                              test_labels,
                                              args,
                                              hera = args.data == 'HERA',
-                                             f1=True,
-                                             args =args)
+                                             f1=True)
     save_metrics('DAE_disc',
                  args,
                  auc_recon, 
@@ -144,6 +143,16 @@ def main(train_dataset,train_images,train_labels,test_images,test_labels,args):
                  radius,
                  auc_latent,
                  f1_latent)
+
+    if args.data == 'MVTEC':
+        accuracy_metrics([ae, discriminator],
+                         train_images,
+                         train_labels,
+                         test_images,
+                         test_labels,
+                         test_masks,
+                         'DAE_disc',
+                         args)
     
 if __name__  == '__main__':
     main()

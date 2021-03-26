@@ -161,15 +161,16 @@ def load_mvtec(args):
     """
     (train_images, train_labels), (test_images, test_labels, test_masks) = get_mvtec_images(args.anomaly_class)
 
-    if args.limit is not None:
-        train_images = train_images[:args.limit,...]
-        train_labels = train_labels[:args.limit,...]  
-        test_images  = test_images[:args.limit,...]
-        test_labels  = test_labels[:args.limit,...] 
-        test_masks = test_masks[:args.limit,...] 
     
-    #train_images = process(train_images)
-    #test_images = process(test_images) # normalisation after patches results in misdirection.
+    if args.limit is not None:
+        train_indx = np.random.permutation(len(train_images))[:args.limit]
+        test_indx = np.random.permutation(len(test_images))[:args.limit]
+
+        train_images = train_images[train_indx]
+        train_labels = train_labels[train_indx]  
+        test_images  = test_images[test_indx]
+        test_labels  = test_labels[test_indx] 
+        test_masks = test_masks[test_indx] 
 
     if args.patches:
         data  = get_patched_dataset(train_images,
@@ -184,17 +185,12 @@ def load_mvtec(args):
 
         train_images, train_labels, test_images, test_labels, test_masks = data
 
-
     if args.rotate:
         train_images = random_rotation(train_images) 
-        test_images, test_masks = random_rotation(test_images,test_masks)
 
     if args.crop:
         train_images = random_crop(train_images,
                                    crop_size=(args.crop_x, args.crop_y))
-        test_images, test_masks = random_crop(test_images,
-                                             crop_size=(args.crop_x, args.crop_y),
-                                             masks = test_masks)
 
 
     train_images = process(train_images, per_image=False)

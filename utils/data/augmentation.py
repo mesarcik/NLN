@@ -38,9 +38,9 @@ def random_rotation(images, masks = None):
                                       lambda: masks  [i,...])
 
     if masks is not None:
-        return r_images, r_masks[...,0]
+        return np.concatenate([images,r_images],axis=0), np.concatenate([masks,r_masks],axis=0)[...,0]
     else:
-        return r_images
+        return np.concatenate([images,r_images],axis=0)
 
 
 
