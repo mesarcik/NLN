@@ -1,16 +1,20 @@
 import tensorflow as tf
 import numpy as np
+from sklearn import metrics 
+from matplotlib import pyplot as plt
+
+import sys
+sys.path.insert(1,'../')
+
 from utils.data import *
 from models import Autoencoder, Discriminator_x
 from utils.metrics.latent_reconstruction import * 
 from utils.data import process
-from matplotlib import pyplot as plt
 from data import load_mvtec, load_cifar10, load_mnist
-from sklearn import metrics 
 class Namespace:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
-PATCH = 128 
+PATCH = 256 
 args = Namespace(input_shape=(PATCH, PATCH, 3),
                    rotate=False,
                    crop=False,
@@ -21,11 +25,11 @@ args = Namespace(input_shape=(PATCH, PATCH, 3),
                    patch_y=PATCH,
                    patch_stride_x = PATCH,
                    patch_stride_y = PATCH,
-                   latent_dim=6000,
+                   latent_dim=1024,
                    # NLN PARAMS
                    anomaly_class='cable',
                    data= 'MVTEC',
-                   neighbours = [10],
+                   neighbours = [3],
                    radius= [5],
                    algorithm = 'knn')
 
@@ -174,10 +178,10 @@ def plot_recon_neighs_diff(test_images, test_labels, test_masks,  neighbours, ne
             axs[i,j+col].imshow(neighbour[i,...],vmin=0,vmax=1)
             axs[i,j+col].set_title('Neighbour {}, mean dist ={}'.format(j,dist),fontsize=5)
         col+=j+1
-        diff = np.abs(reconstruct(neighbours[:,7,...],args) - reconstruct(neighbours[:,8,...],args))
+#        diff = np.abs(reconstruct(neighbours[:,7,...],args) - reconstruct(neighbours[:,8,...],args))
 
-        axs[i,col].imshow(diff[i,...],vmin=0,vmax=0.5)
-        axs[i,col].set_title('diff 7 - 2'.format(j,dist),fontsize=5)
+#        axs[i,col].imshow(diff[i,...],vmin=0,vmax=0.5)
+#        axs[i,col].set_title('diff 7 - 2'.format(j,dist),fontsize=5)
 
 
     plt.savefig('/tmp/neighbours/neighbours_diffs')
@@ -203,11 +207,12 @@ def main():
 #    ae.load_weights('/tmp/DAE/furry-industrious-macaque-of-fruition/training_checkpoints/checkpoint_ae') #128 log no crop
 #    ae.load_weights('/tmp/DAE/witty-fearless-chachalaca-of-romance/training_checkpoints/checkpoint_full_model_ae') #64x64 non_log
 
-    ae.load_weights('/tmp/DAE/vigilant-fractal-gorilla-of-hail/training_checkpoints/checkpoint_full_model_ae') #128 log no crop
-    disc.load_weights('/tmp/DAE/vigilant-fractal-gorilla-of-hail/training_checkpoints/checkpoint_full_model_disc') #128 log no crop
+    #ae.load_weights('/tmp/DAE/vigilant-fractal-gorilla-of-hail/training_checkpoints/checkpoint_full_model_ae') #128 log no crop
+    #disc.load_weights('/tmp/DAE/vigilant-fractal-gorilla-of-hail/training_checkpoints/checkpoint_full_model_disc') #128 log no crop
+    ae.load_weights('/tmp/AE/invisible-wandering-bandicoot-of-order/training_checkpoints/checkpoint_ae') #256x256 log ld =1024
 
     x_hat = ae(test_images).numpy()
-    disc_x_hat, disc_x_hat_cl = disc(x_hat)
+    #disc_x_hat, disc_x_hat_cl = disc(x_hat)
     
     error = np.abs(x_hat - test_images)
     error_recon,recon_labels = reconstruct(error,args,test_labels)
@@ -260,13 +265,13 @@ def main():
     a_u_c = metrics.auc(fpr, tpr)
     print("AUC for NLN without NORM {}".format(a_u_c))
 #### ERROR WITH NEIGHBOURS 
-    error_n = np.abs(neighbours[:,7,...]- neighbours[:,8,...])
+    #error_n = np.abs(neighbours[:,7,...]- neighbours[:,8,...])
 
-    error_recon_n,recon_labels_n = reconstruct(error_n,args,test_labels)
-    error_agg_ =  np.nanmean(error_recon_n,axis=tuple(range(1,error_recon.ndim)))
-    fpr, tpr, thr  = metrics.roc_curve(recon_labels_n==args.anomaly_class,error_agg_)
-    a_u_c = metrics.auc(fpr, tpr)
-    print("AUC for Niehgbours 0 and 1 {}".format(a_u_c))
+    #error_recon_n,recon_labels_n = reconstruct(error_n,args,test_labels)
+    #error_agg_ =  np.nanmean(error_recon_n,axis=tuple(range(1,error_recon.ndim)))
+    #fpr, tpr, thr  = metrics.roc_curve(recon_labels_n==args.anomaly_class,error_agg_)
+    #a_u_c = metrics.auc(fpr, tpr)
+    #print("AUC for Niehgbours 0 and 1 {}".format(a_u_c))
 #### WITH NORM 
     #error = process(error,per_image=False)
     dists = process(neighbours_dist, per_image=False)
