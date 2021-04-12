@@ -25,7 +25,7 @@ args = Namespace(input_shape=(PATCH, PATCH, 3),
                    patch_y=PATCH,
                    patch_stride_x = PATCH,
                    patch_stride_y = PATCH,
-                   latent_dim=1024,
+                   latent_dim=128,
                    # NLN PARAMS
                    anomaly_class='cable',
                    data= 'MVTEC',
@@ -209,7 +209,10 @@ def main():
 
     #ae.load_weights('/tmp/DAE/vigilant-fractal-gorilla-of-hail/training_checkpoints/checkpoint_full_model_ae') #128 log no crop
     #disc.load_weights('/tmp/DAE/vigilant-fractal-gorilla-of-hail/training_checkpoints/checkpoint_full_model_disc') #128 log no crop
-    ae.load_weights('/tmp/AE/invisible-wandering-bandicoot-of-order/training_checkpoints/checkpoint_ae') #256x256 log ld =1024
+    #ae.load_weights('/tmp/AE/invisible-wandering-bandicoot-of-order/training_checkpoints/checkpoint_ae') #256x256 log ld =1024
+    #ae.load_weights('/tmp/AE/lime-grebe-of-uncanny-acumen/training_checkpoints/checkpoint_full_model_ae') #256x256 log ld =1024
+    #ae.load_weights('/tmp/AE/competent-flawless-pigeon-of-leadership/training_checkpoints/checkpoint_full_model_ae') #256x256 log ld =512
+    ae.load_weights('/tmp/AE/cherubic-abstract-wolverine-of-sunshine/training_checkpoints/checkpoint_full_model_ae') #256x256 log ld =128
 
     x_hat = ae(test_images).numpy()
     #disc_x_hat, disc_x_hat_cl = disc(x_hat)
