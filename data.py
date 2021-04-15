@@ -172,6 +172,9 @@ def load_mvtec(args):
         test_labels  = test_labels[test_indx] 
         test_masks = test_masks[test_indx] 
 
+    if args.crop:
+        cropped_images = random_crop(train_images,
+                                   crop_size=(args.crop_x, args.crop_y))
     if args.patches:
         data  = get_patched_dataset(train_images,
                                     train_labels,
@@ -180,21 +183,19 @@ def load_mvtec(args):
                                     test_masks,
                                     p_size = (1,args.patch_x, args.patch_y, 1),
                                     s_size = (1,args.patch_stride_x, args.patch_stride_y, 1),
-                                    central_crop=True)
-
+                                    central_crop=False)
 
         train_images, train_labels, test_images, test_labels, test_masks = data
+
+        if args.crop:
+            train_images = np.concatenate([train_images,cropped_images],axis=0)
+
 
     if args.rotate:
         train_images = random_rotation(train_images) 
 
-    if args.crop:
-        train_images = random_crop(train_images,
-                                   crop_size=(args.crop_x, args.crop_y))
-
-
     train_images = process(train_images, per_image=False)
-    test_images = process(test_images, per_image=False) # normalisation after patches results in misdirection.
+    test_images =  process(test_images, per_image=False) # normalisation after patches results in misdirection.
 
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
 

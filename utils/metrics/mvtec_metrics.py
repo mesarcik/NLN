@@ -9,6 +9,8 @@ from model_loader import get_error
 from utils import cmd_input 
 from utils.metrics import get_sparse_errors
 from utils.data import patches 
+from reporting import plot_neighs
+
 
 
 def accuracy_metrics(model,
@@ -40,34 +42,55 @@ def accuracy_metrics(model,
     error_recon, labels_recon  = patches.reconstruct(error, args, test_labels) 
     masks_recon = patches.reconstruct(np.expand_dims(test_masks,axis=-1), args)[...,0] 
 
-    print('Original with Patches')
-    get_segmentation(error, test_masks, test_labels, args)
-
     print('Original With Reconstruction')
-    get_segmentation(error_recon, masks_recon, labels_recon, args)
+    error_agg =  np.mean(error_recon ,axis=tuple(range(1,error_recon.ndim)))
+    cl_auc , normal_accuracy, anomalous_accuracy = get_acc(args.anomaly_class, labels_recon, error_agg)
+    
+    seg_auc = get_segmentation(error_recon, masks_recon, labels_recon, args)
+
+    with open("outputs/test_results.csv", "a") as myfile:
+        myfile.write('{}, {}, {}, {} ,{} ,{}, {}\n'.format(model_type, 
+                                                         args.anomaly_class, 
+                                                         "False", 
+                                                         seg_auc, 
+                                                         cl_auc, 
+                                                         normal_accuracy, 
+                                                         anomalous_accuracy))
 
     with tf.device('/cpu:0'): # Because of weird tf memory management it is faster on cpu
         z = model.encoder(train_images).numpy()
         z_query = model.encoder(test_images).numpy()
+        x_hat_train = model(train_images).numpy()
+        x_hat = model(test_images).numpy()
 
-    nbrs = neighbors.NearestNeighbors(radius=0.5, 
+    nbrs = neighbors.NearestNeighbors(n_neighbors= args.neighbors[0],
                                       algorithm='ball_tree',
-                                      n_jobs=-1).fit(z[::2]) # using radius
+                                      n_jobs=-1).fit(z) # using radius
 
-    _,neighbours_idx =  nbrs.radius_neighbors(z_query,
-                                              return_distance=True,
-                                              sort_results=True)#radius
+    neighbours_dist, neighbours_idx =  nbrs.kneighbors(z_query,return_distance=True)#KNN
 
-    nln_error = get_sparse_errors(test_images, train_images, model, z, neighbours_idx,'AE', 2) 
+    test_images_stacked = np.stack([test_images]*neighbours_idx.shape[-1],axis=1)
+    neighbours = x_hat_train[neighbours_idx]
+    nln_error = np.nanmean(np.abs(test_images_stacked - neighbours), axis =1)
+
     nln_error_recon = patches.reconstruct(nln_error, args) 
 
-    get_acc(args.anomaly_class,labels_recon, nln_error)
-
-    print('NLN with Patches')
-    get_segmentation(nln_error, test_masks, test_labels, args)
-
     print('NLN With Reconstruction')
-    get_segmentation(nln_error_recon, masks_recon, labels_recon, args)
+    error_agg =  np.mean(nln_error_recon ,axis=tuple(range(1,nln_error_recon.ndim)))
+    cl_auc_nln , normal_accuracy_nln, anomalous_accuracy_nln = get_acc(args.anomaly_class,labels_recon, error_agg)
+    seg_auc_nln = get_segmentation(nln_error_recon, masks_recon, labels_recon, args)
+
+    plot_neighs(test_images, test_labels, test_masks, x_hat, neighbours,neighbours_dist, args)
+
+    with open("outputs/test_results.csv", "a") as myfile:
+        myfile.write('{}, {}, {}, {} ,{} ,{}, {}\n'.format(model_type, 
+                                                         args.anomaly_class, 
+                                                         "True", 
+                                                         seg_auc_nln, 
+                                                         cl_auc_nln, 
+                                                         normal_accuracy_nln, 
+                                                         anomalous_accuracy_nln))
+
     
     #x_hat_anomalous = get_reconstructed(model_type, model,anomalous_images)
 
@@ -77,15 +100,16 @@ def get_segmentation(error, test_masks, test_labels, args):
     """
     fpr, tpr, thr  = roc_curve(test_masks.flatten()>0, np.mean(error,axis=-1).flatten())
     print('This is Segementation AUC {}'.format(auc(fpr, tpr)))
+    return auc(fpr,tpr)
 
-    thr = get_threshold(fpr,tpr,thr,'MD',test_labels, error.mean(axis=tuple(range(1,error.ndim))),args.anomaly_class)
+    #thr = get_threshold(fpr,tpr,thr,'MD',test_labels, error.mean(axis=tuple(range(1,error.ndim))),args.anomaly_class)
 
-    error = error.mean(axis=tuple(range(1,error.ndim)))
-    normal_accuracy = accuracy_score(test_labels == 'non_anomalous', error < thr)
-    anomalous_accuracy = accuracy_score(test_labels == args.anomaly_class, error > thr)
+    #error = error.mean(axis=tuple(range(1,error.ndim)))
+    #normal_accuracy = accuracy_score(test_labels == 'non_anomalous', error < thr)
+    #anomalous_accuracy = accuracy_score(test_labels == args.anomaly_class, error > thr)
 
-    print('Segmenation based Anomalous Accuracy = {}'.format(anomalous_accuracy))
-    print('Segmentation based Normal Accuracy = {}'.format(normal_accuracy))
+    #print('Segmenation based Anomalous Accuracy = {}'.format(anomalous_accuracy))
+    #print('Segmentation based Normal Accuracy = {}'.format(normal_accuracy))
     
 
 def get_acc(anomaly_class, test_labels, error):
@@ -103,6 +127,8 @@ def get_acc(anomaly_class, test_labels, error):
 
     print('Anomalous Accuracy = {}'.format(anomalous_accuracy))
     print('Normal Accuracy = {}'.format(normal_accuracy))
+
+    return auc(fpr,tpr), normal_accuracy, anomalous_accuracy
 
     
 def get_threshold(fpr,tpr,thr,flag,test_labels,error,anomaly_class):
