@@ -10,9 +10,9 @@ def plot_neighs(test_images, test_labels, test_masks, x_hat, neighbours, neighbo
     fig, ax = plt.subplots(N_PATCHES, neighbours.shape[1]+3, figsize=(10,10))
 
     if (('grid' in args.anomaly_class) or ('screw' in args.anomaly_class) or ('zipper' in args.anomaly_class)): 
-        test_images = test_images[,...0] 
-        x_hat = x_hat[,...0] 
-        neighbours= neighbours[,...0] 
+        test_images = test_images[...,0] 
+        x_hat = x_hat[...,0] 
+        neighbours= neighbours[...,0] 
 
     for i,r in enumerate(rs):
         col = 0
