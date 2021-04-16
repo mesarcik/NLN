@@ -6,12 +6,11 @@ from models import (Encoder,
                    Autoencoder)
 
 from utils.plotting  import  (generate_and_save_images,
-                             generate_and_save_training,
-                             save_training_curves)
+                             generate_and_save_training)
 
 from utils.training import print_epoch,save_checkpoint
-from utils.metrics import get_classifcation,nearest_error,save_metrics
 from model_config import *
+from .helper import end_routine
 
 optimizer = tf.keras.optimizers.Adam()
 
@@ -59,33 +58,11 @@ def train(ae,train_dataset,test_images,test_labels,args,verbose=True,save=True):
 
     return ae
 
-def main(train_dataset,train_images,train_labels,test_images,test_labels,args):
+def main(train_dataset,train_images,train_labels,test_images,test_labels, test_masks,args):
     ae = Autoencoder(args)
     ae = train(ae,train_dataset,test_images,test_labels,args)
-    save_training_curves(ae,args,test_images,test_labels,'AE')
-    auc_latent, f1_latent, neighbour,radius = nearest_error(ae,
-                                                     train_images,
-                                                     test_images,
-                                                     test_labels,
-                                                     'AE',
-                                                     args,
-                                                     args.data == 'HERA')
-    
-    auc_recon ,f1_recon = get_classifcation('AE',
-                                             ae,
-                                             test_images,
-                                             test_labels,
-                                             args,
-                                             hera = args.data == 'HERA',
-                                             f1=True)
-    save_metrics('AE',
-                 args,
-                 auc_recon, 
-                 f1_recon,
-                 neighbour,
-                 radius,
-                 auc_latent,
-                 f1_latent)
+    end_routine(train_images, test_images, test_labels, test_masks, [ae], 'AE', args)
+
     
 if __name__  == '__main__':
     main()

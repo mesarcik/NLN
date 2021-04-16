@@ -4,7 +4,7 @@ import os
 import pandas as pd
 from sklearn.metrics import roc_curve, auc, f1_score
 from math import isnan
-from model_loader import get_error
+from inference import get_error
 from utils import cmd_input 
 from utils.data import reconstruct
 
@@ -12,7 +12,6 @@ from utils.data import reconstruct
 def calculate_metrics(error,  
                       test_labels,
                       anomaly,
-                      hera=False,
                       f1=False):
     """
         Returns the AUROC and F1 score of a particular model 
@@ -20,24 +19,15 @@ def calculate_metrics(error,
         error (np.array): the reconstruction error of a given model
         test_labels (np.array): the test labels from the testing set
         anomaly (int): the anomlous class label
-        hera (bool): if the HERA training set is used
         f1 (bool): return f1 score?
 
     """
     error = (error - np.min(error))/(np.max(error) - np.min(error))
-    if hera:
-        mask= (np.char.find(test_labels, anomaly)>=0)
-        fpr, tpr, thr  = roc_curve(mask, error)
-        if f1:
-            f1 = max([f1_score(mask,error>t) for t in thr])
-        else:
-            f1 =  None
-    else:
-        fpr, tpr, thr  = roc_curve(test_labels==anomaly, error)
-        if f1:
-            f1 = max([f1_score(test_labels==anomaly,error>t) for t in thr])
-        else: 
-            f1 = None
+    fpr, tpr, thr  = roc_curve(test_labels==anomaly, error)
+    if f1:
+        f1 = max([f1_score(test_labels==anomaly,error>t) for t in thr])
+    else: 
+        f1 = None
 
     return auc(fpr, tpr),f1
 
@@ -47,7 +37,6 @@ def get_classifcation(model_type,
                       test_images,
                       test_labels,
                       args,
-                      hera=False,
                       f1=False):
     """
         Returns the AUROC and F1 score of a particular model 
@@ -57,7 +46,6 @@ def get_classifcation(model_type,
         test_images (np.array): the test images from the testing set
         test_labels (np.array): the test labels from the testing set
         args (Namespace):  arguments from utils.cmd_input
-        hera (bool): if the HERA training set is used
         f1 (bool): return f1 score?
 
     """
@@ -69,14 +57,14 @@ def get_classifcation(model_type,
         error, test_labels = reconstruct(error, args, test_labels)
         error =  np.mean(error,axis=tuple(range(1,error.ndim)))
 
-        if args.dataset == 'CIFAR10':
+        if args.data == 'CIFAR10':
             (_, _), (_, test_labels) = tf.keras.datasets.cifar10.load_data()
             test_labels = test_labels[:args.limit,0] #because cifar labels are weird
 
     else:
         error = get_error(model_type,model,test_images)
 
-    auc,f1 = calculate_metrics(error,test_labels,args.anomaly_class,hera,f1)
+    auc,f1 = calculate_metrics(error,test_labels,args.anomaly_class,f1)
     return auc,f1
 
 def save_metrics(model_type,

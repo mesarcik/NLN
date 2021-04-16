@@ -7,7 +7,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
-from utils.metrics import nearest_error
+from utils.metrics import get_nln_metrics 
 #from model_loader import load_model
 from data import *
 
@@ -90,13 +90,13 @@ def describe(dataset):
                              radius = [params[dataset][2]],
                              model_name = entry.Name)
 
-            max_auc,max_f1,max_neighbours,max_radius = nearest_error(model, 
-                                                                     train_images[entry.Class != train_labels],
-                                                                     test_images,
-                                                                     test_labels, 
-                                                                     entry.Model, 
-                                                                     args, 
-                                                                     False)
+            max_auc,max_f1,max_neighbours,max_radius = get_nln_metrics(model, 
+                                                                       train_images[entry.Class != train_labels],
+                                                                       test_images,
+                                                                       test_labels, 
+                                                                       entry.Model, 
+                                                                       args, 
+                                                                       False)
 
             df['AUC_Latent_Error'].iloc[i] =  max_auc
             df['Radius'].iloc[i] = params[dataset][2] 

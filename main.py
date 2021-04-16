@@ -20,7 +20,9 @@ def main():
 
     elif cmd_input.args.data == 'MVTEC':
         data  = load_mvtec(cmd_input.args)
-        test_mask = data[5]
+        test_masks = data[5]
+
+    else: test_masks = None
 
     (train_dataset,train_images,train_labels,test_images,test_labels) = data[0:5]
 
@@ -33,11 +35,14 @@ def main():
                                                cmd_input.args.model_name))
     print(" __________________________________ \n")
 
-    train_dae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
-    #train_ganomaly(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
-    #train_ae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
-    #train_vae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
-    #train_aae(train_dataset,train_images,train_labels,test_images,test_labels,cmd_input.args)
+    with open("temp_log", "a") as f:
+        f.write('{} \t {}\n'.format(cmd_input.args.anomaly_class, cmd_input.args.model_name))
+
+    train_ae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
+    train_dae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
+    #train_ganomaly(train_dataset,train_images,train_labels,test_images,test_labels,test_masks, cmd_input.args)
+    #train_vae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
+    #train_aae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
 
 
 

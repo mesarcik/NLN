@@ -1,21 +1,16 @@
 import tensorflow as tf
 import numpy as np
-import os 
-import pandas as pd
 from sklearn.metrics import roc_curve, auc, accuracy_score
-from sklearn import neighbors
-from math import isnan
-from model_loader import get_error
+from inference import infer, get_error
 from utils import cmd_input 
-from utils.metrics import get_sparse_errors
 from utils.data import patches 
+from utils.metrics import nln, get_nln_errors
 from reporting import plot_neighs
 
 
 
 def accuracy_metrics(model,
                      train_images,
-                     train_labels,
                      test_images,
                      test_labels,
                      test_masks,
@@ -27,7 +22,6 @@ def accuracy_metrics(model,
 
         model (tf.keras.Model): the model used
         train_images (np.array): non-anomalous images from train set 
-        train_labels (np.array): non-anomalous labels of train set
         test_images (np.array): testing images
         test_labels (np.array): labels of testing images
         test_masks (np.array): ground truth masks for the testing images
@@ -36,9 +30,10 @@ def accuracy_metrics(model,
 
     """
     # Get output from model #TODO: do we want to normalise?
+    
+    x_hat = infer(model[0], test_images, args, 'AE')
+    error = get_error('AE', test_images, x_hat,mean=False)
 
-    with tf.device('/cpu:0'): # Because of weird tf memory management it is faster on cpu
-        error  = get_error(model_type,model,test_images, return_z = False, mean=False) 
     error_recon, labels_recon  = patches.reconstruct(error, args, test_labels) 
     masks_recon = patches.reconstruct(np.expand_dims(test_masks,axis=-1), args)[...,0] 
 
@@ -57,21 +52,28 @@ def accuracy_metrics(model,
                                                          normal_accuracy, 
                                                          anomalous_accuracy))
 
-    with tf.device('/cpu:0'): # Because of weird tf memory management it is faster on cpu
-        z = model.encoder(train_images).numpy()
-        z_query = model.encoder(test_images).numpy()
-        x_hat_train = model(train_images).numpy()
-        x_hat = model(test_images).numpy()
+    z = infer(model[0].encoder, train_images, args, 'encoder')
+    z_query = infer(model[0].encoder, test_images, args, 'encoder')
 
-    nbrs = neighbors.NearestNeighbors(n_neighbors= args.neighbors[0],
-                                      algorithm='ball_tree',
-                                      n_jobs=-1).fit(z) # using radius
+    x_hat_train  = infer(model[0], train_images, args, 'AE')
+    x_hat = infer(model[0], test_images, args, 'AE')
 
-    neighbours_dist, neighbours_idx =  nbrs.kneighbors(z_query,return_distance=True)#KNN
+    neighbours_dist, neighbours_idx, x_hat_train, neighbour_mask =  nln(z, 
+                                                                        z_query, 
+                                                                        x_hat_train, 
+                                                                        args.algorithm, 
+                                                                        args.neighbors[-1], 
+                                                                        args.radius[0])
+    nln_error = get_nln_errors(model,
+                               model_type,
+                               z_query,
+                               z,
+                               test_images,
+                               x_hat_train,
+                               neighbours_idx,
+                               neighbour_mask,
+                               args)
 
-    test_images_stacked = np.stack([test_images]*neighbours_idx.shape[-1],axis=1)
-    neighbours = x_hat_train[neighbours_idx]
-    nln_error = np.nanmean(np.abs(test_images_stacked - neighbours), axis =1)
 
     nln_error_recon = patches.reconstruct(nln_error, args) 
 
@@ -80,7 +82,7 @@ def accuracy_metrics(model,
     cl_auc_nln , normal_accuracy_nln, anomalous_accuracy_nln = get_acc(args.anomaly_class,labels_recon, error_agg)
     seg_auc_nln = get_segmentation(nln_error_recon, masks_recon, labels_recon, args)
 
-    plot_neighs(test_images, test_labels, test_masks, x_hat, neighbours,neighbours_dist, args)
+    plot_neighs(test_images, test_labels, test_masks, x_hat, x_hat_train[neighbours_idx], neighbours_dist, args)
 
     with open("outputs/test_results.csv", "a") as myfile:
         myfile.write('{}, {}, {}, {} ,{} ,{}, {}\n'.format(model_type, 

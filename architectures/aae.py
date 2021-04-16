@@ -9,8 +9,9 @@ from utils.plotting  import  (generate_and_save_images,
                              save_training_curves)
 
 from utils.training import print_epoch,save_checkpoint
-from utils.metrics import get_classifcation,nearest_error,save_metrics
 from model_config import BUFFER_SIZE,BATCH_SIZE,cross_entropy
+
+from .helper import end_routine
 
 ae_optimizer = tf.keras.optimizers.Adam(1e-5)
 discriminator_optimizer = tf.keras.optimizers.Adam(1e-5)
@@ -80,7 +81,7 @@ def train(ae,discriminator,train_dataset,test_images,test_labels,args):
     generate_and_save_images(ae,args.epochs,image_batch[:25,...],'AAE',args)
     return ae
 
-def main(train_dataset,train_images,train_labels,test_images,test_labels,args):
+def main(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, args):
     ae = Autoencoder(args)
     discriminator = Discriminator_z(args)
     ae = train(ae,
@@ -89,31 +90,8 @@ def main(train_dataset,train_images,train_labels,test_images,test_labels,args):
                test_images,
                test_labels,
                args)
-    save_training_curves(ae,args,test_images,test_labels,'AAE')
 
-    auc_latent, f1_latent,neighbour,radius = nearest_error(ae,
-                                                    train_images,
-                                                    test_images,
-                                                    test_labels,
-                                                    'AAE',
-                                                    args,
-                                                    args.data == 'HERA')
-
-    auc_recon ,f1_recon  = get_classifcation('AAE',
-                                              ae,
-                                              test_images,
-                                              test_labels,
-                                              args,
-                                              hera = args.data == 'HERA',
-                                              f1=True)
-    save_metrics('AAE',
-                 args,
-                 auc_recon, 
-                 f1_recon,
-                 neighbour,
-                 radius,
-                 auc_latent,
-                 f1_latent)
+    end_routine(train_images, test_images, test_labels, test_masks, [ae, discriminator], 'AAE', args)
 
 
     
