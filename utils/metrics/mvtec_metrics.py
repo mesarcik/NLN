@@ -15,11 +15,16 @@ def accuracy_metrics(model,
                      test_labels,
                      test_masks,
                      model_type,
+                     max_neighbours,
+                     max_radius,
                      args):
 
     """
         Calculate accuracy metrics for MVTEC AD as reported by the paper
 
+
+        Parameters
+        ----------
         model (tf.keras.Model): the model used
         train_images (np.array): non-anomalous images from train set 
         test_images (np.array): testing images
@@ -27,6 +32,11 @@ def accuracy_metrics(model,
         test_masks (np.array): ground truth masks for the testing images
         model_type (str): the type of model (AE,VAE,...)
         args (Namespace): the argumenets from cmd_args
+        max_neighbours (int): number of neighbours resulting in best AUROC
+        max_radius (double): size of radius resulting in best AUROC
+
+        Returns
+        -------
 
     """
     # Get output from model #TODO: do we want to normalise?
@@ -44,7 +54,7 @@ def accuracy_metrics(model,
     seg_auc = get_segmentation(error_recon, masks_recon, labels_recon, args)
 
     with open("outputs/test_results.csv", "a") as myfile:
-        myfile.write('{}, {}, {}, {} ,{} ,{}, {}\n'.format(model_type, 
+        myfile.write('{},{},{},{},{},{},{}\n'.format(model_type, 
                                                          args.anomaly_class, 
                                                          "False", 
                                                          seg_auc, 
@@ -62,10 +72,10 @@ def accuracy_metrics(model,
                                                                         z_query, 
                                                                         x_hat_train, 
                                                                         args.algorithm, 
-                                                                        args.neighbors[-1], 
-                                                                        args.radius[0])
+                                                                        max_neighbours,
+                                                                        max_radius)
     nln_error = get_nln_errors(model,
-                               model_type,
+                               'AE',
                                z_query,
                                z,
                                test_images,
@@ -74,8 +84,10 @@ def accuracy_metrics(model,
                                neighbour_mask,
                                args)
 
-
-    nln_error_recon = patches.reconstruct(nln_error, args) 
+    if nln_error.ndim ==4:
+        nln_error_recon = patches.reconstruct(nln_error, args)
+    else:
+        nln_error_recon = patches.reconstruct_latent_patches(nln_error, args)
 
     print('NLN With Reconstruction')
     error_agg =  np.mean(nln_error_recon ,axis=tuple(range(1,nln_error_recon.ndim)))
@@ -85,7 +97,7 @@ def accuracy_metrics(model,
     plot_neighs(test_images, test_labels, test_masks, x_hat, x_hat_train[neighbours_idx], neighbours_dist, args)
 
     with open("outputs/test_results.csv", "a") as myfile:
-        myfile.write('{}, {}, {}, {} ,{} ,{}, {}\n'.format(model_type, 
+        myfile.write('{},{},{},{},{},{},{}\n'.format(model_type, 
                                                          args.anomaly_class, 
                                                          "True", 
                                                          seg_auc_nln, 

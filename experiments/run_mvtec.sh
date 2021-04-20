@@ -1,15 +1,15 @@
 #!/bin/sh
 echo "Logging for run_mvtecr.sh at time: $(date)." >> log.log
 
-limit=None 
-epochs=100
+limit=None
+epochs=200
 percentage=0.0
 seed=$(openssl rand -hex 3)
 d=$(date +'%m-%d-%Y-%I-%M_')
 
-for i in bottle cable capsule carpet grid hazelnut leather metal_nut pill screw tile toothbrush transistor wood zipper 
+for i in bottle cable capsule carpet grid hazelnut leather metal_nut pill screw tile toothbrush transistor wood zipper
 	do
-	for ld in 2 10 100
+	for ld in 64 
 		do
 				python -u main.py -limit $limit \
 							      -anomaly_class $i\
@@ -17,20 +17,20 @@ for i in bottle cable capsule carpet grid hazelnut leather metal_nut pill screw 
 							      -epochs $epochs \
 							      -latent_dim $ld \
 							      -data MVTEC\
-							      -neighbors 1 2 5 100 \
+							      -neighbors 1 3 5 10 \
 							      -radius 1 2 5 100 \
-							      -algorithm radius \
+							      -algorithm knn\
 								  -rotate True \
 								  -crop True \
-								  -crop_x 128 \
-								  -crop_y 128 \
+								  -crop_x 256\
+								  -crop_y 256\
 								  -patches True \
 								  -patch_x 256 \
 								  -patch_y 256 \
-								  -patch_stride_x 128 \
-								  -patch_stride_y 128 \
+								  -patch_stride_x 256\
+								  -patch_stride_y 256\
 								  -seed $d$seed | tee -a mvtec.log 
 		done
 done
 
-python report.py -data MVTEC -seed $seed
+#python report.py -data MVTEC -seed $seed

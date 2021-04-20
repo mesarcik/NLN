@@ -120,12 +120,13 @@ def get_nln_errors(model,
         disc_x_stacked = np.stack([disc_x]*neighbours_idx.shape[-1],axis=1)
         disc_neighbours = disc_x_hat_train[neighbours_idx]
 
-        error = get_error(model_type, 
-                          test_images_stacked,
-                          neighbours,
-                          d_x = disc_x_stacked, 
-                          d_x_hat = disc_neighbours, 
-                          mean=False) 
+        error_nln = get_error(model_type, 
+                              test_images_stacked,
+                              neighbours,
+                              d_x = disc_x_stacked, 
+                              d_x_hat = disc_neighbours, 
+                              mean=False) 
+        error = np.nanmean(error_nln, axis =1) #nanmean for frNN 
 
         error_recon = get_error(model_type, 
                                 test_images,
@@ -216,7 +217,11 @@ def get_nln_metrics(model,
                                    args)
 
             if args.patches:  
-                error, test_labels_ = reconstruct(error, args, test_labels) 
+                if error.ndim ==4:
+                    error, test_labels_ = reconstruct(error, args, test_labels) 
+                else:
+                    error, test_labels_ = reconstruct_latent_patches(error, args, test_labels) 
+
 
             error = np.nanmean(error,axis=tuple(range(1,error.ndim)))
             temp_args = [error,test_labels_,args.anomaly_class,args.neighbors,
@@ -246,7 +251,10 @@ def get_nln_metrics(model,
                                        args)
 
                 if args.patches:  
-                    error, test_labels_ = patches.reconstruct(error, args, test_labels) 
+                    if error.ndim ==4:
+                        error, test_labels_ = reconstruct(error, args, test_labels) 
+                    else:
+                        error, test_labels_ = reconstruct_latent_patches(error, args, test_labels) 
 
                 error = np.nanmean(error,axis=tuple(range(1,error.ndim)))
 

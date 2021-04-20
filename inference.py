@@ -80,19 +80,20 @@ def get_error(model_type,
         error = x - x_hat 
 
     elif model_type == 'DAE_disc':
-        reconstruction_error = x - x_hat
-        if abs: reconstruction_error = abs(reconstruction_error)
-        reconstruction_error = reconstruction_error.mean(
-                                                         axis=tuple(
-                                                         range(1,reconstruction_error.ndim)))
+        #reconstruction_error = x - x_hat
+        #if abs: reconstruction_error = abs(reconstruction_error)
+        #reconstruction_error = reconstruction_error.mean(
+        #                                                 axis=tuple(
+        #                                                 range(1,reconstruction_error.ndim)))
 
         discriminator_error  = d_x - d_x_hat
         if abs: discriminator_error = abs(discriminator_error)
-        discriminator_error = discriminator_error.mean(
-                                                         axis=tuple(
-                                                         range(1,discriminator_error.ndim)))
-        alpha = 0.9
-        error = (1-alpha)*reconstruction_error + alpha*discriminator_error
+        #discriminator_error = discriminator_error.mean(
+        #                                                 axis=tuple(
+        #                                                 range(1,discriminator_error.ndim)))
+        #alpha = 0.9
+        #error = (1-alpha)*reconstruction_error + alpha*discriminator_error
+        error = discriminator_error
 
     elif model_type == 'GANomaly':
         error = z- z_hat

@@ -90,7 +90,7 @@ def save_training_curves(model,args,test_images,test_labels,name):
 
     """
     model_output = infer(model[0], test_images, args, 'AE') 
-    error = get_error('AE',test_images,model_output)
+    error = get_error('AE',test_images, model_output)
     df = pd.DataFrame(columns=['Reconstruction'])
 
     labels = pd.unique(test_labels)

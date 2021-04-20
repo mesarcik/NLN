@@ -66,7 +66,7 @@ def train(vae,train_dataset,test_images,test_labels,args):
     return vae 
 
 
-def main(train_dataset,train_images,train_labels,test_images, test_masks, test_labels,args):
+def main(train_dataset,train_images,train_labels,test_images, test_labels, test_masks, args):
     vae = VAE(args)
     vae = train(vae,train_dataset,test_images,test_labels,args)
     end_routine(train_images, test_images, test_labels, test_masks, [vae], 'VAE', args)

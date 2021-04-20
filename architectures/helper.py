@@ -33,5 +33,7 @@ def end_routine(train_images, test_images, test_labels, test_masks, model, model
                          test_labels,
                          test_masks,
                          model_type,
+                         neighbour,
+                         radius,
                          args)
 
