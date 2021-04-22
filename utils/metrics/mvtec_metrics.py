@@ -94,7 +94,6 @@ def accuracy_metrics(model,
     cl_auc_nln , normal_accuracy_nln, anomalous_accuracy_nln = get_acc(args.anomaly_class,labels_recon, error_agg)
     seg_auc_nln = get_segmentation(nln_error_recon, masks_recon, labels_recon, args)
 
-    plot_neighs(test_images, test_labels, test_masks, x_hat, x_hat_train[neighbours_idx], neighbours_dist, args)
 
     with open("outputs/test_results.csv", "a") as myfile:
         myfile.write('{},{},{},{},{},{},{}\n'.format(model_type, 
@@ -105,6 +104,7 @@ def accuracy_metrics(model,
                                                          normal_accuracy_nln, 
                                                          anomalous_accuracy_nln))
 
+    plot_neighs(test_images, test_labels, test_masks, x_hat, x_hat_train[neighbours_idx], neighbours_dist, args)
     
     #x_hat_anomalous = get_reconstructed(model_type, model,anomalous_images)
 

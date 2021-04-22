@@ -4,8 +4,8 @@ from matplotlib import pyplot as plt
 import matplotlib.cm as cm
 from collections import OrderedDict
 from glob import glob
-import warnings
-warnings.filterwarnings('ignore')
+#import warnings
+#warnings.filterwarnings('ignore')
 
 def add_df_parameters(dataset):
     """

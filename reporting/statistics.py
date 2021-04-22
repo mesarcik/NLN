@@ -4,7 +4,7 @@ import pandas as pd
 from glob import glob
 from tqdm import tqdm
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
 from utils.metrics import get_nln_metrics 

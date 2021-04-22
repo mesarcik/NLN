@@ -59,7 +59,7 @@ def nln(z, z_query, x_hat_train, algorithm, neighbours, radius=None):
 
         neighbours_idx = neighbours_idx_
 
-        em = np.empty([1,patch_x,patch_y,3])
+        em = np.empty([1,x_hat_train.shape[1], x_hat_train.shape[2] ,x_hat_train.shape[-1]])
         em[:] = np.nan
 
         x_hat_train = np.concatenate([x_hat_train, em])#if no neighbours make error large
@@ -231,7 +231,7 @@ def get_nln_metrics(model,
             (max_auc,max_f1,max_neighbours,
                     max_radius,index_counter,d) =  get_max_score(temp_args)
 
-        elif args.algorithm == 'radius':
+        elif args.algorithm == 'frnn':
             for r in  args.radius:
                 t = time()
                 neighbours_dist, neighbours_idx, x_hat_train, neighbour_mask = nln(z, 
