@@ -68,7 +68,7 @@ elif args.data == 'MVTEC':
         ('zipper' in args.anomaly_class)): 
         args.input_shape =(256,256,1)
     else:
-        args.input_shape =(256,256,3)
+        args.input_shape =(256,256,1)
 
 if args.patches:
     args.input_shape = (args.patch_x,args.patch_y,args.input_shape[-1])

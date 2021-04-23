@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 
 N_PATCHES = 10
 
-def plot_neighs(test_images, test_labels, test_masks, x_hat, neighbours, neighbours_dist, args):
+def plot_neighs(test_images, test_labels, test_masks, x_hat, neighbours, neighbours_dist, model_type, args):
     rs = np.random.randint(0,len(test_labels),N_PATCHES) 
     fig, ax = plt.subplots(N_PATCHES, args.neighbors[-1]+3, figsize=(10,10))
 
@@ -35,8 +35,10 @@ def plot_neighs(test_images, test_labels, test_masks, x_hat, neighbours, neighbo
             col+=1
 
 
-    plt.tight_layout()
-    plt.savefig('/tmp/neighbours/{}_neighbours'.format(args.anomaly_class))
+    #plt.tight_layout()
+    plt.savefig('outputs/{}/{}/{}/neighbours.png'.format(model_type,
+                                                   args.anomaly_class,
+                                                   args.model_name))
     plt.close('all')
 
 

@@ -104,9 +104,10 @@ def accuracy_metrics(model,
                                                          normal_accuracy_nln, 
                                                          anomalous_accuracy_nln))
 
-    plot_neighs(test_images, test_labels, test_masks, x_hat, x_hat_train[neighbours_idx], neighbours_dist, args)
+    plot_neighs(test_images, test_labels, test_masks, x_hat, x_hat_train[neighbours_idx], neighbours_dist, model_type, args)
     
     #x_hat_anomalous = get_reconstructed(model_type, model,anomalous_images)
+    return seg_auc, seg_auc_nln
 
 def get_segmentation(error, test_masks, test_labels, args):
     """

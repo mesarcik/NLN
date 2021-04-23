@@ -17,6 +17,17 @@ def end_routine(train_images, test_images, test_labels, test_masks, model, model
                                             test_labels,
                                             args,
                                             f1=True)
+    if args.data == 'MVTEC':
+        seg_auc, seg_auc_nln = accuracy_metrics(model,
+                                                train_images,
+                                                test_images,
+                                                test_labels,
+                                                test_masks,
+                                                model_type,
+                                                neighbour,
+                                                radius,
+                                                args)
+
     save_metrics(model_type,
                  args,
                  auc_recon, 
@@ -24,16 +35,8 @@ def end_routine(train_images, test_images, test_labels, test_masks, model, model
                  neighbour,
                  radius,
                  auc_latent,
-                 f1_latent)
+                 f1_latent,
+                 seg_auc,
+                 seg_auc_nln)
 
-    if args.data == 'MVTEC':
-        accuracy_metrics(model,
-                         train_images,
-                         test_images,
-                         test_labels,
-                         test_masks,
-                         model_type,
-                         neighbour,
-                         radius,
-                         args)
 

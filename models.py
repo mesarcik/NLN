@@ -11,83 +11,51 @@ class Encoder(tf.keras.layers.Layer):
         self.conv, self.pool, self.batchnorm = [],[],[]
         self.latent_dim  = args.latent_dim
 
-        for n in range(n_layers):
-            self.conv.append(layers.Conv2D(filters = n_filters//(2**n), 
-                                       kernel_size = (2,2), 
-                                       #strides = (2,2),
-                                       padding = 'same',
-                                       activation='relu'))
-            self.pool.append(layers.MaxPooling2D(pool_size=(2,2),padding='same'))
+        self.conv.append(layers.Conv2D(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        self.conv.append(layers.Conv2D(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        self.conv.append(layers.Conv2D(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        self.conv.append(layers.Conv2D(n_filters, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        self.conv.append(layers.Conv2D(n_filters*2, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        self.conv.append(layers.Conv2D(n_filters*2, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        self.conv.append(layers.Conv2D(n_filters*4, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        self.conv.append(layers.Conv2D(n_filters*2, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        self.conv.append(layers.Conv2D(n_filters, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        self.conv.append(layers.Conv2D(self.latent_dim, (8, 8), strides=1, activation='linear', padding='valid'))
 
-            self.batchnorm.append(layers.BatchNormalization())
-
-        #output shape = 2,2
-        self.flatten = layers.Flatten()
-        self.dense_ae = layers.Dense(self.latent_dim, activation=None)
-
-        self.dense_vae = layers.Dense(n_filters, activation='relu')
-        self.mean = layers.Dense(self.latent_dim)
-        self.logvar = layers.Dense(self.latent_dim)
+        self.reshape = layers.Reshape((self.latent_dim,))
 
     def call(self, x,vae=False):
-        x = self.input_layer(x)
 
-        for layer in range(n_layers):
-            x = self.conv[layer](x)
-            if layer !=n_layers-1:
-                x = self.pool[layer](x)
-            x = self.batchnorm[layer](x)
-        x = self.flatten(x)
-
-        if vae: 
-            x = self.dense_vae(x)
-            mean = self.mean(x)
-            logvar = self.logvar(x)
-            return [mean,logvar] 
-        else: 
-            x = self.dense_ae(x)
-            return x
+        for layer in self.conv:
+            x = layer(x)
+        x = self.reshape(x)
+        return x
 
 class Decoder(tf.keras.layers.Layer):
     def __init__(self,args):
         super(Decoder, self).__init__()
         self.latent_dim = args.latent_dim
         self.input_layer = layers.InputLayer(input_shape=[self.latent_dim,])
-        self.dense= layers.Dense(args.input_shape[0]//2**(n_layers-1) *
-                                 args.input_shape[1]//2**(n_layers-1) *
-                                 n_filters,activation='relu')
-        self.reshape = layers.Reshape((args.input_shape[0]//2**(n_layers-1),
-                                       args.input_shape[1]//2**(n_layers-1),
-                                       n_filters))
+        self.inp_shape = args.input_shape
 
-        self.conv, self.pool, self.batchnorm = [],[],[]
-        for l in range(n_layers):
+        self.reshape = layers.Reshape((1,1,self.latent_dim))
 
-            self.conv.append(layers.Conv2DTranspose(filters = n_filters//(2** n_layers-l), 
-                                               kernel_size = (2,2), 
-                                               #strides = (2,2),
-                                               padding = 'same',
-                                               activation='relu'))
-
-            self.pool.append(layers.UpSampling2D(size=(2,2)))
-            self.batchnorm.append(layers.BatchNormalization())
-
-        self.conv_output = layers.Conv2DTranspose(filters = args.input_shape[-1], 
-                                           kernel_size = (2,2), 
-                                           padding = 'same',
-                                           activation='sigmoid')
+        self.conv = []
+        self.conv.append(layers.Conv2DTranspose(n_filters, (8, 8), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='valid'))
+        self.conv.append(layers.Conv2D(n_filters*2, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        self.conv.append(layers.Conv2D(n_filters*4, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        self.conv.append(layers.Conv2DTranspose(n_filters*2, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        self.conv.append(layers.Conv2D(n_filters*2, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        self.conv.append(layers.Conv2DTranspose(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        self.conv.append(layers.Conv2D(n_filters, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        self.conv.append(layers.Conv2DTranspose(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        self.conv.append(layers.Conv2DTranspose(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        self.conv.append(layers.Conv2DTranspose(self.inp_shape[-1], (4, 4), strides=2, activation='sigmoid', padding='same'))
 
     def call(self, x):
-        x = self.input_layer(x)
-        x = self.dense(x)
         x = self.reshape(x)
-
-        for layer in range(n_layers -1):
-            x = self.conv[layer](x)
-            x = self.pool[layer](x)
-            x = self.batchnorm[layer](x)
-        
-        x = self.conv_output(x)
+        for layer in self.conv:
+            x = layer(x)
         return  x
 
 class Autoencoder(tf.keras.Model):

@@ -74,7 +74,9 @@ def save_metrics(model_type,
                  neighbour,
                  radius,
                  auc_latent,
-                 f1_latent):
+                 f1_latent,
+                 seg_auc=None,
+                 seg_auc_nln = None):
     """
         Either appends or saves a new .csv file with the top r and K 
 
@@ -99,9 +101,11 @@ def save_metrics(model_type,
                                      'Neighbour',
                                      'Radius',
                                      'AUC_Reconstruction_Error',
-                                     'AUC_Latent_Error',
+                                     'AUC_NLN_Error',
                                      'F1_Reconstruction_Error',
-                                     'F1_Latent_Error'])
+                                     'F1_NLN_Error',
+                                     'Segmentation_Reconstruction',
+                                     'Segmentation_NLN'])
     else:  
         df = pd.read_csv('outputs/results_{}_{}.csv'.format(args.data,
                                                             args.seed))
@@ -114,9 +118,11 @@ def save_metrics(model_type,
                     'Neighbour':neighbour,
                     'Radius':radius,
                     'AUC_Reconstruction_Error':auc_reconstruction,
-                    'AUC_Latent_Error':auc_latent,
+                    'AUC_NLN_Error':auc_latent,
                     'F1_Reconstruction_Error':f1_reconstruction,
-                    'F1_Latent_Error':f1_latent},
+                    'F1_NLN_Error':f1_latent,
+                    'Segmentation_Reconstruction':seg_auc,
+                    'Segmentation_NLN':seg_auc_nln},
                      ignore_index=True)
 
     df.to_csv('outputs/results_{}_{}.csv'.format(args.data,

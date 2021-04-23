@@ -5,6 +5,7 @@ from model_config import BUFFER_SIZE,BATCH_SIZE
 from sklearn.model_selection import train_test_split
 from utils.data import (get_mvtec_images, 
                         process,
+                        rgb2gray,
                         get_patched_dataset,
                         random_rotation,
                         random_crop,
@@ -160,6 +161,9 @@ def load_mvtec(args):
         args.percentage_anomaly (float) adds a percentage of the anomalous/novel class to the training set
     """
     (train_images, train_labels), (test_images, test_labels, test_masks) = get_mvtec_images(args.anomaly_class)
+
+    train_images = rgb2gray(train_images)  
+    test_images = rgb2gray(test_images)  
 
     
     if args.limit is not None:
