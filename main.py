@@ -40,8 +40,8 @@ def main():
 
     train_ae_ssim(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
     train_ae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
-    #train_dae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
-    #train_ganomaly(train_dataset,train_images,train_labels,test_images,test_labels,test_masks, cmd_input.args)
+    train_dae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
+    train_ganomaly(train_dataset,train_images,train_labels,test_images,test_labels,test_masks, cmd_input.args)
     #train_vae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
     #train_aae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
 

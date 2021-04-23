@@ -9,7 +9,7 @@ d=$(date +'%m-%d-%Y-%I-%M_')
 
 for i in bottle cable capsule carpet grid hazelnut leather metal_nut pill screw tile toothbrush transistor wood zipper
 	do
-	for ld in 64 
+	for ld in 64 128 1024
 		do
 				python -u main.py -limit $limit \
 							      -anomaly_class $i\
