@@ -1,8 +1,8 @@
 #!/bin/sh
 echo "Logging for run_mvtecr.sh at time: $(date)." >> log.log
 
-limit=None
-epochs=200
+limit=10 #None
+epochs=20
 percentage=0.0
 seed=$(openssl rand -hex 3)
 d=$(date +'%m-%d-%Y-%I-%M_')
@@ -11,7 +11,7 @@ for i in bottle cable capsule carpet grid hazelnut leather metal_nut pill screw 
 	do
 	for ld in 64 128 1024
 		do
-				python -u main.py -limit $limit \
+				python3 -u main.py -limit $limit \
 							      -anomaly_class $i\
 							      -percentage_anomaly $percentage \
 							      -epochs $epochs \

@@ -102,6 +102,7 @@ def get_nln_errors(model,
 
     if ((model_type == 'AE') or 
         (model_type == 'AE_SSIM') or
+        (model_type == 'NNAE') or
         (model_type == 'AAE') or
         (model_type == 'DAE') or
         (model_type == 'VAE')):

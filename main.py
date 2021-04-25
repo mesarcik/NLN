@@ -38,10 +38,11 @@ def main():
     with open("temp_log", "a") as f:
         f.write('{} \t {}\n'.format(cmd_input.args.anomaly_class, cmd_input.args.model_name))
 
-    train_ae_ssim(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
-    train_ae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
-    train_dae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
-    train_ganomaly(train_dataset,train_images,train_labels,test_images,test_labels,test_masks, cmd_input.args)
+    train_nnae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
+    #train_ae_ssim(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
+    #train_ae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
+    #train_dae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
+    #train_ganomaly(train_dataset,train_images,train_labels,test_images,test_labels,test_masks, cmd_input.args)
     #train_vae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
     #train_aae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
 
