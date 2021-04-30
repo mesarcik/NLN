@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.metrics import roc_curve, auc, accuracy_score
 from inference import infer, get_error
 from utils import cmd_input 
-from utils.data import patches 
+from utils.data import patches,sizes 
 from utils.metrics import nln, get_nln_errors
 from reporting import plot_neighs
 
@@ -84,6 +84,11 @@ def accuracy_metrics(model,
                                neighbour_mask,
                                args)
 
+    dists = get_dists(neighbours_dist, args)
+    fpr, tpr, thr  = roc_curve(labels_recon==args.anomaly_class, dists)
+    dists_auc = auc(fpr,tpr)
+    print('\nDists AUC = {}\n'.format(dists_auc))
+
     if nln_error.ndim ==4:
         nln_error_recon = patches.reconstruct(nln_error, args)
     else:
@@ -107,7 +112,7 @@ def accuracy_metrics(model,
     plot_neighs(test_images, test_labels, test_masks, x_hat, x_hat_train[neighbours_idx], neighbours_dist, model_type, args)
     
     #x_hat_anomalous = get_reconstructed(model_type, model,anomalous_images)
-    return seg_auc, seg_auc_nln
+    return seg_auc, seg_auc_nln, dists_auc
 
 def get_segmentation(error, test_masks, test_labels, args):
     """
@@ -177,3 +182,20 @@ def normalise(x):
     y = (x- np.min(x))/(np.max(x) - np.min(x))
 
     return y
+
+def get_dists(neighbours_dist, args):
+
+    dists = np.mean(neighbours_dist, axis = tuple(range(1,neighbours_dist.ndim)))
+
+    if args.patches:
+        n_patches = sizes[str(args.anomaly_class)]//args.patch_x
+        srt,fnnsh = 0,n_patches**2
+        dists_recon = []
+        for i in range(0,len(dists),n_patches**2):
+            dists_recon.append(np.mean(dists[srt:fnnsh])) ## USING MAX
+            srt = fnnsh
+            fnnsh += n_patches**2
+
+        return dists_recon
+    else:
+        return dists 

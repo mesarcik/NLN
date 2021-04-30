@@ -198,8 +198,8 @@ def load_mvtec(args):
     if args.rotate:
         train_images = random_rotation(train_images) 
 
-    train_images = process(np.log10(train_images), per_image=False)
-    test_images =  process(np.log10(test_images), per_image=False) # normalisation after patches results in misdirection.
+    train_images = process(train_images, per_image=False)
+    test_images =  process(test_images, per_image=False) # normalisation after patches results in misdirection.
 
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
 

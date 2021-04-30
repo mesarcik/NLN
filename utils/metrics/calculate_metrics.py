@@ -76,7 +76,8 @@ def save_metrics(model_type,
                  auc_latent,
                  f1_latent,
                  seg_auc=None,
-                 seg_auc_nln = None):
+                 seg_auc_nln = None,
+                 dists_auc=None):
     """
         Either appends or saves a new .csv file with the top r and K 
 
@@ -105,7 +106,8 @@ def save_metrics(model_type,
                                      'F1_Reconstruction_Error',
                                      'F1_NLN_Error',
                                      'Segmentation_Reconstruction',
-                                     'Segmentation_NLN'])
+                                     'Segmentation_NLN',
+                                     'Distance_AUC'])
     else:  
         df = pd.read_csv('outputs/results_{}_{}.csv'.format(args.data,
                                                             args.seed))
@@ -122,7 +124,8 @@ def save_metrics(model_type,
                     'F1_Reconstruction_Error':f1_reconstruction,
                     'F1_NLN_Error':f1_latent,
                     'Segmentation_Reconstruction':seg_auc,
-                    'Segmentation_NLN':seg_auc_nln},
+                    'Segmentation_NLN':seg_auc_nln,
+                    'Distance_AUC': dists_auc},
                      ignore_index=True)
 
     df.to_csv('outputs/results_{}_{}.csv'.format(args.data,

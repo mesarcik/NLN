@@ -1,23 +1,23 @@
 #!/bin/sh
 echo "Logging for run_mvtecr.sh at time: $(date)." >> log.log
 
-limit=10 #None
-epochs=20
+limit=None
+epochs=75
 percentage=0.0
 seed=$(openssl rand -hex 3)
 d=$(date +'%m-%d-%Y-%I-%M_')
 
 for i in bottle cable capsule carpet grid hazelnut leather metal_nut pill screw tile toothbrush transistor wood zipper
 	do
-	for ld in 64 128 1024
+	for ld in 128
 		do
-				python3 -u main.py -limit $limit \
+				python -u main.py -limit $limit \
 							      -anomaly_class $i\
 							      -percentage_anomaly $percentage \
 							      -epochs $epochs \
 							      -latent_dim $ld \
 							      -data MVTEC\
-							      -neighbors 1 3 5 10 \
+							      -neighbors 1 3 5 \
 							      -radius 1 2 5 100 \
 							      -algorithm knn\
 								  -rotate True \
