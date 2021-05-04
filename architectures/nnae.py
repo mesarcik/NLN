@@ -22,17 +22,16 @@ neighbours = 5
 
 def nn_loss(x,x_hat,dists):
     nle = tf.reduce_mean(dists)
-    recon = tf.reduce_mean(tf.math.abs(tf.subtract(x,x_hat)))
+    recon = 0*tf.reduce_mean(tf.math.abs(tf.subtract(x,x_hat))) # a hack to make tf work ?????
 
     return nle + recon
 
 
 def l2_loss(x,x_hat):
-    return tf.reduce_mean(tf.math.abs(tf.subtract(x,x_hat)))
+    return tf.reduce_mean(tf.math.abs(tf.subtract(x,x_hat)),name='l2loss')
 
 def z_loss(dists):
-    print(dists)
-    return tf.reduce_mean(dists)
+    return tf.reduce_mean(dists,name='encloss')
 
 @tf.function
 def train_step(model, x, dists):
@@ -41,30 +40,33 @@ def train_step(model, x, dists):
     This function computes the loss and gradients, and uses the latter to
     update the model's parameters.
     """
-    with tf.GradientTape() as ae_tape:#, tf.GradientTape() as enc_tape:
+    with tf.GradientTape() as ae_tape, tf.GradientTape() as enc_tape:
         x_hat = model(x)
-        z = model.encoder(x)
-        ae_loss = nn_loss(x,x_hat,dists)
-        #enc_loss = z_loss(dists)
+        ae_loss = l2_loss(x,x_hat)
+        enc_loss = nn_loss(x,x_hat,dists)
     ae_gradients = ae_tape.gradient(ae_loss, model.trainable_variables)
-#    enc_gradients = enc_tape.gradient(enc_loss, model.encoder.trainable_variables)
+    enc_gradients = enc_tape.gradient(enc_loss, model.encoder.trainable_variables)
 
     ae_optimizer.apply_gradients(zip(ae_gradients, model.trainable_variables))
-#    enc_optimizer.apply_gradients(zip(enc_gradients, model.encoder.trainable_variables))
-    return ae_loss#, enc_loss
+    enc_optimizer.apply_gradients(zip(enc_gradients, model.encoder.trainable_variables))
+    return ae_loss, enc_loss
 
 def train(ae,train_dataset,train_images, test_images,test_labels,args,verbose=True,save=True):
     ae_loss, enc_loss = [], []
+    train_dataset = tf.data.Dataset.from_tensor_slices(train_images).batch(BATCH_SIZE)
     for epoch in range(args.epochs):
         start = time.time()
         _z = infer(ae.encoder, train_images, args, 'encoder')# ae.encoder(train_dataset)
         nbrs = neighbors.NearestNeighbors(n_neighbors= neighbours, algorithm='ball_tree', n_jobs=-1).fit(_z) 
-        for image_batch in train_dataset:
-            z = ae.encoder(image_batch)
-            neighbours_dist, _ =  nbrs.kneighbors(z.numpy(),return_distance=True)
-            dists = tf.convert_to_tensor(neighbours_dist, dtype=tf.float32)
+        z = ae.encoder(test_images)
 
-            auto_loss =  train_step(ae,image_batch, dists)
+        neighbours_dist, _ =  nbrs.kneighbors(z.numpy(), return_distance=True)
+        dists = tf.convert_to_tensor(neighbours_dist, dtype=tf.float32)
+
+        dists = tf.data.Dataset.from_tensor_slices(dists).batch(BATCH_SIZE)
+
+        for image_batch,dist in zip(train_dataset,dists):
+            auto_loss, encoder_loss =  train_step(ae,image_batch, dist)
 
         generate_and_save_images(ae,
                                  epoch + 1,
@@ -74,11 +76,13 @@ def train(ae,train_dataset,train_images, test_images,test_labels,args,verbose=Tr
         save_checkpoint(ae,epoch, args,'NNAE','ae')
 
         ae_loss.append(auto_loss)
+        enc_loss.append(encoder_loss)
 
-        print_epoch('NNAE',epoch,time.time()-start,{'AE Loss':auto_loss.numpy()},None)
+        print_epoch('NNAE',epoch,time.time()-start,{'AE Loss':auto_loss.numpy(),
+                                                    'Encoder Loss':encoder_loss.numpy()},None)
 
-    generate_and_save_training([ae_loss],
-                                ['ae loss'],
+    generate_and_save_training([ae_loss,enc_loss],
+                                ['ae loss','encoder loss'],
                                 'NNAE',args)
     generate_and_save_images(ae,epoch,image_batch[:25,...],'NNAE',args)
 
