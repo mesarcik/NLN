@@ -1,4 +1,5 @@
 import tensorflow as tf
+from matplotlib import pyplot as plt
 import numpy as np
 import time
 from models import (Encoder, 
@@ -64,6 +65,22 @@ def train(ae,train_dataset,train_images, test_images,test_labels,args,verbose=Tr
 
         neighbours_dist, neighbours_idx  =  nbrs.kneighbors(_z, return_distance=True)
         neighbours = _x[neighbours_idx]
+
+        ############ DELETE 
+        fig,axs = plt.subplots(5,NNEIGHBOURS +2,figsize=(5,5))
+        for i in range(5):
+            r = np.random.randint(train_images.shape[0])
+            axs[i,0].imshow(train_images[r,...])
+            axs[i,1].imshow(_x[r,...])
+            for j in range(2,NNEIGHBOURS+2):
+                axs[i,j].imshow(neighbours[r,j-2,...])
+                axs[i,j].set_title('N{} - {}'.format(j-1, round(np.mean(neighbours_dist[r]),3)),fontsize=5)
+                axs[i,j].axis('off')
+        plt.savefig('/tmp/neighbours/n_{}_{}'.format(args.anomaly_class,epoch))
+        plt.close('all')
+        ###################
+
+
 
         neighbours = tf.convert_to_tensor(neighbours, dtype=tf.float32)
         neighbours_dataet = tf.data.Dataset.from_tensor_slices(neighbours).batch(BATCH_SIZE)
