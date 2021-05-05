@@ -84,10 +84,6 @@ def accuracy_metrics(model,
                                neighbour_mask,
                                args)
 
-    dists = get_dists(neighbours_dist, args)
-    fpr, tpr, thr  = roc_curve(labels_recon==args.anomaly_class, dists)
-    dists_auc = auc(fpr,tpr)
-    print('\nDists AUC = {}\n'.format(dists_auc))
 
     if nln_error.ndim ==4:
         nln_error_recon = patches.reconstruct(nln_error, args)
@@ -99,6 +95,11 @@ def accuracy_metrics(model,
     cl_auc_nln , normal_accuracy_nln, anomalous_accuracy_nln = get_acc(args.anomaly_class,labels_recon, error_agg)
     seg_auc_nln = get_segmentation(nln_error_recon, masks_recon, labels_recon, args)
 
+    dists = get_dists(neighbours_dist, args)
+    dists = dists + error_agg 
+    fpr, tpr, thr  = roc_curve(labels_recon==args.anomaly_class, dists)
+    dists_auc = auc(fpr,tpr)
+    print('\nDists AUC = {}\n'.format(dists_auc))
 
     with open("outputs/test_results.csv", "a") as myfile:
         myfile.write('{},{},{},{},{},{},{}\n'.format(model_type, 
