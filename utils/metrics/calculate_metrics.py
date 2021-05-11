@@ -4,7 +4,7 @@ import os
 import pandas as pd
 from sklearn.metrics import roc_curve, auc, f1_score
 from math import isnan
-from inference import get_error
+from inference import infer, get_error
 from utils import cmd_input 
 from utils.data import reconstruct
 
@@ -49,20 +49,15 @@ def get_classifcation(model_type,
         f1 (bool): return f1 score?
 
     """
-    if args.patches :
-        with tf.device('/cpu:0'): 
-            model_output = model[0](test_images)
-            z = model[0].encoder(test_images)
-        error = np.abs(test_images -  model_output.numpy())
-        error, test_labels = reconstruct(error, args, test_labels)
-        error =  np.mean(error,axis=tuple(range(1,error.ndim)))
+    x_hat = infer(model[0], test_images, args, 'AE')
 
-        if args.data == 'CIFAR10':
-            (_, _), (_, test_labels) = tf.keras.datasets.cifar10.load_data()
-            test_labels = test_labels[:args.limit,0] #because cifar labels are weird
+    if args.patches :
+        error = get_error('AE', test_images, x_hat, mean=False)
+        error, test_labels = reconstruct(error, args, test_labels)
+        error =  error.mean(axis=tuple(range(1,error.ndim)))
 
     else:
-        error = get_error(model_type,model,test_images)
+        error = get_error('AE', test_images, x_hat, mean=True)
 
     auc,f1 = calculate_metrics(error,test_labels,args.anomaly_class,f1)
     return auc,f1

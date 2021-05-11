@@ -102,7 +102,6 @@ def get_nln_errors(model,
 
     if ((model_type == 'AE') or 
         (model_type == 'AE_SSIM') or
-        (model_type == 'NNAE') or
         (model_type == 'AAE') or
         (model_type == 'DAE') or
         (model_type == 'VAE')):
@@ -165,6 +164,12 @@ def get_nln_errors(model,
 
         error[neighbour_mask] = error_recon[neighbour_mask]
 
+    elif model_type == 'NNAE':
+        x_hat = infer(model[0], test_images, args, 'AE')
+        z = infer(model[0].encoder, test_images, args, 'encoder')
+        z_hat = infer(model[1], [x_hat, neighbours], args, 'NNAE')
+
+        error = np.abs(z - z_hat)
 
     return error
 

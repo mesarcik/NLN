@@ -10,7 +10,7 @@ def infer(model, data, args, arch):
         Parameters
         ----------
         model (tf.keras.Model or tf.keras.layers.Layer) 
-        data (np.array) 
+        data (np.array) or [x,nln] in the case of NNAE 
         args (Namespace)
         arch (str)
         
@@ -19,7 +19,20 @@ def infer(model, data, args, arch):
         np.array
 
     """
-    data_tensor = tf.data.Dataset.from_tensor_slices(data).batch(BATCH_SIZE)
+    if arch == 'NNAE':
+        xhat_tensor = tf.data.Dataset.from_tensor_slices(data[0]).batch(BATCH_SIZE)
+        nln_tensor = tf.data.Dataset.from_tensor_slices(data[1]).batch(BATCH_SIZE)
+
+        output = np.empty([len(data[0]), args.latent_dim])
+        strt, fnnsh = 0, BATCH_SIZE
+        for xhat_batch, nln_batch in zip(xhat_tensor, nln_tensor):
+            output[strt:fnnsh,...] = model(xhat_batch, [nln_batch[:,i,...] for i in range(nln_batch.shape[1])]).numpy()
+            strt = fnnsh
+            fnnsh +=BATCH_SIZE
+        return output
+    else:
+        data_tensor = tf.data.Dataset.from_tensor_slices(data).batch(BATCH_SIZE)
+
     if arch =='AE' or arch == 'encoder':
         if arch=='encoder':
             output = np.empty([len(data), args.latent_dim])
@@ -74,12 +87,13 @@ def get_error(model_type,
 
     if ((model_type == 'AE') or 
         (model_type == 'AAE') or
-        (model_type == 'NNAE') or
         (model_type == 'AE_SSIM') or
         (model_type == 'DAE') or
         (model_type == 'VAE')):
 
         error = x - x_hat 
+
+
 
     elif model_type == 'DAE_disc':
         #reconstruction_error = x - x_hat
@@ -97,7 +111,9 @@ def get_error(model_type,
         #error = (1-alpha)*reconstruction_error + alpha*discriminator_error
         error = discriminator_error
 
-    elif model_type == 'GANomaly':
+    elif ((model_type == 'GANomaly') or 
+         (model_type == 'NNAE')):
+
         error = z- z_hat
 
     if ab:

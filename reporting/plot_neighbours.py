@@ -19,19 +19,23 @@ def plot_neighs(test_images, test_labels, test_masks, x_hat, neighbours, neighbo
 
         ax[i,col].imshow(test_images[r,...]); 
         ax[i,col].set_title('Input {} idx {}'.format(test_labels[r], r), fontsize=6)
+        ax[i,col].axis('off')
         col+=1
 
         ax[i,col].imshow(test_masks[r,...]); 
         ax[i,col].set_title('Masks', fontsize=6)
+        ax[i,col].axis('off')
         col+=1
 
         ax[i,col].imshow(x_hat[r,...]); 
         ax[i,col].set_title('Reconstruction', fontsize=6)
+        ax[i,col].axis('off')
         col+=1
 
         for n, dist in zip(neighbours[r], neighbours_dist[r]): 
             ax[i,col].imshow(n)
             ax[i,col].set_title('neigh {}, dist {}'.format(col, round(dist,2)), fontsize=5)
+            ax[i,col].axis('off')
             col+=1
 
 
