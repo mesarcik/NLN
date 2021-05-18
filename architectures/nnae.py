@@ -17,7 +17,7 @@ from .helper import end_routine
 
 ae_optimizer = tf.keras.optimizers.Adam()
 encoder_optimizer = tf.keras.optimizers.Adam()
-NNEIGHBOURS= 5
+NNEIGHBOURS= 5 +1
 
 
 def nn_loss(x,x_hat,neigh):
@@ -61,6 +61,7 @@ def train_step(ae, encoder, x, neighs):
 def train(ae, encoder,train_dataset, train_images, test_images,test_labels,args,verbose=True,save=True):
     ae_loss, e_loss= [], []
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).batch(BATCH_SIZE)
+    r = [np.random.randint(train_images.shape[0]) for i in range(5)]
     for epoch in range(args.epochs):
         start = time.time()
 
@@ -69,21 +70,23 @@ def train(ae, encoder,train_dataset, train_images, test_images,test_labels,args,
         nbrs = neighbors.NearestNeighbors(n_neighbors= NNEIGHBOURS, algorithm='ball_tree', n_jobs=-1).fit(_z) 
 
         neighbours_dist, neighbours_idx  =  nbrs.kneighbors(_z, return_distance=True)
+        neighbours_dist, neighbours_idx  = neighbours_dist[:,1:],neighbours_idx[:,1:]
         neighbours = _x[neighbours_idx]
 
-        ############ DELETE 
-        fig,axs = plt.subplots(5,NNEIGHBOURS +2,figsize=(5,5))
+        ############ DELETE
+        fig,axs = plt.subplots(5,NNEIGHBOURS +1,figsize=(5,5))
         for i in range(5):
-            r = np.random.randint(train_images.shape[0])
-            axs[i,0].imshow(train_images[r,...])
-            axs[i,1].imshow(_x[r,...])
-            for j in range(2,NNEIGHBOURS+2):
-                axs[i,j].imshow(neighbours[r,j-2,...])
-                axs[i,j].set_title('N{} - {}'.format(j-1, round(neighbours_dist[r,j-2]),3),fontsize=5)
-                axs[i,j].axis('off')
+            col = 0
+            axs[i,col].imshow(train_images[r[i],...,0]); col+=1
+            axs[i,col].imshow(_x[r[i],...,0]); col+=1
+            for j in range(1,NNEIGHBOURS-1):
+                axs[i,col].imshow(neighbours[r[i],j,...,0]);
+                axs[i,col].set_title('N{} - {}'.format(j, round(neighbours_dist[r[i],j],3)),fontsize=5);
+                axs[i,col].axis('off'); col+=1
         plt.savefig('/tmp/neighbours/n_{}_{}'.format(args.anomaly_class,epoch))
         plt.close('all')
         ###################
+
 
         neighbours = tf.convert_to_tensor(neighbours, dtype=tf.float32)
         neighbours_dataet = tf.data.Dataset.from_tensor_slices(neighbours).batch(BATCH_SIZE)
