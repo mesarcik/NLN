@@ -5,6 +5,7 @@ import pickle
 from sklearn import metrics,neighbors
 from inference import infer, get_error
 from utils.data import reconstruct, reconstruct_latent_patches
+from model_config import *
 import itertools
 import warnings
 warnings.filterwarnings('ignore')
@@ -170,6 +171,18 @@ def get_nln_errors(model,
         z_hat = infer(model[1], [x_hat, neighbours], args, 'NNAE')
 
         error = np.abs(z - z_hat)
+
+    elif model_type == 'RESNET_AE':
+
+        #TODO: Inefficeint way of doing things
+        test_images = resnet(test_images).numpy()
+        error = [] 
+        for n in range(neighbours.shape[1]):
+            error.append(test_images - resnet(neighbours[:,n,:]).numpy())
+        error = np.array(error)
+        error = np.swapaxes(error, 0, 1)
+            
+        error = np.nanmean(error, axis =1) #nanmean for frNN 
 
     return error
 

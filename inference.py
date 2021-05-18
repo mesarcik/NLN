@@ -93,6 +93,10 @@ def get_error(model_type,
 
         error = x - x_hat 
 
+    elif (model_type == 'RESNET_AE'):
+
+        error = resnet(x).numpy() - resnet(x_hat).numpy()
+
 
 
     elif model_type == 'DAE_disc':
