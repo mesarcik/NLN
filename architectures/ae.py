@@ -15,7 +15,7 @@ from model_config import *
 from .helper import end_routine
 from inference import infer
 
-optimizer = tf.keras.optimizers.Adam()
+optimizer = tf.keras.optimizers.Adam(2e-4)
 NNEIGHBOURS= 5
 
 def l2_loss(x,x_hat):

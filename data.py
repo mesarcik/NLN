@@ -9,7 +9,8 @@ from utils.data import (get_mvtec_images,
                         get_patched_dataset,
                         random_rotation,
                         random_crop,
-                        resize)
+                        resize,
+                        sizes)
 
 
 def load_mnist(args):
@@ -162,9 +163,6 @@ def load_mvtec(args):
     """
     (train_images, train_labels), (test_images, test_labels, test_masks) = get_mvtec_images(args.anomaly_class)
 
-    #train_images = rgb2gray(train_images)  
-    #test_images = rgb2gray(test_images)  
-
     
     if args.limit is not None:
         train_indx = np.random.permutation(len(train_images))[:args.limit]
@@ -176,9 +174,20 @@ def load_mvtec(args):
         test_labels  = test_labels[test_indx] 
         test_masks = test_masks[test_indx] 
 
+    train_images = resize(train_images, (sizes[args.anomaly_class], 
+                                         sizes[args.anomaly_class], 
+                                         args.input_shape[-1]))
+
+    test_images = resize(test_images, (sizes[args.anomaly_class], 
+                                       sizes[args.anomaly_class], 
+                                       args.input_shape[-1]))
+    test_masks = np.expand_dims(test_masks,axis=-1)
+    test_masks = resize(test_masks, (sizes[args.anomaly_class], 
+                                       sizes[args.anomaly_class], 
+                                       1))[...,0]
     if args.crop:
-        cropped_images = random_crop(train_images,
-                                   crop_size=(args.crop_x, args.crop_y))
+        cropped_images = random_crop(train_images,crop_size=(args.crop_x, args.crop_y))
+
     if args.patches:
         data  = get_patched_dataset(train_images,
                                     train_labels,
@@ -197,6 +206,8 @@ def load_mvtec(args):
 
     if args.rotate:
         train_images = random_rotation(train_images) 
+
+    
 
     train_images = process(train_images, per_image=False)
     test_images =  process(test_images, per_image=False) # normalisation after patches results in misdirection.

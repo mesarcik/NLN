@@ -1,7 +1,7 @@
 import argparse
 import os
+from utils.data import sizes 
 from coolname import generate_slug as new_name
-
 """
     Pretty self explanatory, gets arguments for training and adds them to config
 """
@@ -35,40 +35,40 @@ parser.add_argument('-rotate', metavar='-rot', type=bool,default=False,
 
 parser.add_argument('-crop', metavar='-cr', type=bool,default=False, 
                     help = 'Train on crops?')
-parser.add_argument('-crop_x', metavar='-cx', type=int,default=7, 
+parser.add_argument('-crop_x', metavar='-cx', type=int,
                     help = 'x-dimension of crop')
-parser.add_argument('-crop_y', metavar='-cy', type=int,default=7, 
+parser.add_argument('-crop_y', metavar='-cy', type=int,
                     help = 'y-dimension of crop')
 
 parser.add_argument('-patches', metavar='-ptch', type=bool,default=False, 
                     help = 'Train on patches?')
-parser.add_argument('-patch_x', metavar='-px', type=int,default=7, 
+parser.add_argument('-patch_x', metavar='-px', type=int,
                     help = 'x-dimension of patchsize ')
-parser.add_argument('-patch_y', metavar='-py', type=int, default=7,
+parser.add_argument('-patch_y', metavar='-py', type=int, 
                     help = 'y-dimension of patchsize ')
-parser.add_argument('-patch_stride_x', metavar='-psx', type=int, default=7,
+parser.add_argument('-patch_stride_x', metavar='-psx', type=int, 
                     help = 'x-dimension of strides of patches')
-parser.add_argument('-patch_stride_y', metavar='-psy', type=int, default=7,
+parser.add_argument('-patch_stride_y', metavar='-psy', type=int, 
                     help = 'y-dimension of strides of patches')
 
 args = parser.parse_args()
 args.model_name = new_name()
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = args.debug
 
+dim = 1024# sizes[args.anomaly_class]
 if args.data == 'MNIST' or args.data == 'FASHION_MNIST':
     args.input_shape =(28,28,1)
 
 elif args.data == 'CIFAR10':
-    args.input_shape =(32,32,3)
+    args.input_shape =(dim,dim,3)
 
 elif args.data == 'MVTEC':
     if (('grid' in args.anomaly_class) or
         ('screw' in args.anomaly_class) or 
         ('zipper' in args.anomaly_class)): 
-        args.input_shape =(256,256,1)
+        args.input_shape =(dim,dim,1)
     else:
-        args.input_shape =(256,256,3)
+        args.input_shape =(dim,dim,3)
 
 if args.patches:
     args.input_shape = (args.patch_x,args.patch_y,args.input_shape[-1])
@@ -86,4 +86,3 @@ if ((args.data == 'MNIST') or
     (args.data == 'FASHION_MNIST')): 
 
     args.anomaly_class = int(args.anomaly_class)
-

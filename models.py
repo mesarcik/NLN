@@ -12,15 +12,18 @@ class Encoder(tf.keras.layers.Layer):
 
         self.conv.append(layers.Conv2D(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
         self.conv.append(layers.Conv2D(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        self.conv.append(layers.Conv2D(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        if args.input_shape[1] >32:
+            self.conv.append(layers.Conv2D(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
         self.conv.append(layers.Conv2D(n_filters, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        self.conv.append(layers.Conv2D(n_filters*2, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        if args.input_shape[1] >64:
+            self.conv.append(layers.Conv2D(n_filters*2, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
         self.conv.append(layers.Conv2D(n_filters*2, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        self.conv.append(layers.Conv2D(n_filters*4, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        if args.input_shape[1] >128:
+            self.conv.append(layers.Conv2D(n_filters*4, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
         self.conv.append(layers.Conv2D(n_filters*2, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
         self.conv.append(layers.Conv2D(n_filters, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
         self.conv.append(layers.Conv2D(self.latent_dim, (8, 8), strides=1, activation='linear', padding='valid'))
-
+        
         self.reshape = layers.Reshape((self.latent_dim,))
 
     def call(self, x,vae=False):
@@ -43,13 +46,18 @@ class Decoder(tf.keras.layers.Layer):
         self.conv.append(layers.Conv2DTranspose(n_filters, (8, 8), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='valid'))
         self.conv.append(layers.Conv2D(n_filters*2, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
         self.conv.append(layers.Conv2D(n_filters*4, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        self.conv.append(layers.Conv2DTranspose(n_filters*2, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        if args.input_shape[1] >128:
+            self.conv.append(layers.Conv2DTranspose(n_filters*2, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
         self.conv.append(layers.Conv2D(n_filters*2, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        self.conv.append(layers.Conv2DTranspose(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        if args.input_shape[1] >64:
+            self.conv.append(layers.Conv2DTranspose(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
         self.conv.append(layers.Conv2D(n_filters, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        self.conv.append(layers.Conv2DTranspose(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
+        if args.input_shape[1] >32:
+            self.conv.append(layers.Conv2DTranspose(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
         self.conv.append(layers.Conv2DTranspose(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
         self.conv.append(layers.Conv2DTranspose(self.inp_shape[-1], (4, 4), strides=2, activation='sigmoid', padding='same'))
+
+        self.flatten = layers.Flatten()
 
     def call(self, x):
         x = self.reshape(x)

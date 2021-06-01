@@ -121,7 +121,7 @@ def get_error(model_type,
         error = z- z_hat
 
     if ab:
-        error = abs(error)
+        error = np.abs(error,dtype=np.float32)
 
     if mean:
         error =  error.mean(axis=tuple(range(1,error.ndim)))

@@ -71,8 +71,8 @@ def random_crop(images, crop_size):
     images = tf.image.central_crop(images ,0.8).numpy()
     images_,_  = get_patches(images, 
                             np.zeros(len(images)),
-                            (1, int(1.3*crop_size[0]), int(1.3*crop_size[1]), 1),
-                            (1, int(1.3*crop_size[0]), int(1.3*crop_size[1]), 1),
+                            (1, int(1.7*crop_size[0]), int(1.7*crop_size[1]), 1),
+                            (1, int(1.7*crop_size[0]), int(1.7*crop_size[1]), 1),
                             (1,1,1,1),
                             'VALID') 
 

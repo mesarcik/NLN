@@ -2,6 +2,7 @@ import copy
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler 
 from skimage import transform 
+import tensorflow as tf
 
 def process(data,per_image=True):
     """
@@ -32,7 +33,8 @@ def resize(data, dim):
         dim  (tuple) Tuple with 4 entires (#images, X, Y, RGB)
 
     """
-    return transform.resize(data,(data.shape[0], dim[0], dim[1], dim[2]), anti_aliasing=False)
+    #return transform.resize(data,(data.shape[0], dim[0], dim[1], dim[2]), anti_aliasing=False)
+    return tf.image.resize(data, [dim[0],dim[1]],antialias=False)
 
 def rgb2gray(rgb):
     """

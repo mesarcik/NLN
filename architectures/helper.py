@@ -4,12 +4,13 @@ from utils.metrics import get_classifcation, get_nln_metrics, save_metrics, accu
 
 def end_routine(train_images, test_images, test_labels, test_masks, model, model_type, args):
     save_training_curves(model,args,test_images,test_labels,model_type)
-    auc_latent, f1_latent, neighbour,radius = get_nln_metrics(model,
-                                                              train_images,
-                                                              test_images,
-                                                              test_labels,
-                                                              model_type,
-                                                              args)
+    (auc_latent, f1_latent, neighbour,radius, dists_auc,sum_auc, mul_auc, x_hat, x_hat_train,
+            neighbours_idx, neighbours_dist) = get_nln_metrics(model,   
+                                                               train_images, 
+                                                               test_images, 
+                                                               test_labels, 
+                                                               model_type, 
+                                                               args)
     
     auc_recon ,f1_recon = get_classifcation(model_type,
                                             model,
@@ -18,26 +19,31 @@ def end_routine(train_images, test_images, test_labels, test_masks, model, model
                                             args,
                                             f1=True)
     if args.data == 'MVTEC':
-        seg_auc, seg_auc_nln, dists_auc  = accuracy_metrics(model,
-                                                            train_images,
-                                                            test_images,
-                                                            test_labels,
-                                                            test_masks,
-                                                            model_type,
-                                                            neighbour,
-                                                            radius,
-                                                            args)
+        seg_auc, seg_auc_nln, dists_auc, seg_dists_auc, seg_prc, seg_prc_nln, seg_iou, seg_iou_nln  = accuracy_metrics(model,
+                                                                                                                        train_images,
+                                                                                                                        test_images,
+                                                                                                                        test_labels,
+                                                                                                                        test_masks,
+                                                                                                                        model_type,
+                                                                                                                        neighbour,
+                                                                                                                        radius,
+                                                                                                                        args)
 
     save_metrics(model_type,
                  args,
                  auc_recon, 
-                 f1_recon,
+                 seg_prc,
                  neighbour,
                  radius,
                  auc_latent,
-                 f1_latent,
+                 seg_prc_nln,
                  seg_auc,
                  seg_auc_nln,
-                 dists_auc)
+                 seg_iou,
+                 seg_iou_nln,
+                 dists_auc,
+                 seg_dists_auc,
+                 sum_auc,
+                 mul_auc)
 
 
