@@ -11,4 +11,5 @@ from .heatmap import heatmap, get_max_parameters, sensitivity_heatmap,sensitivit
 from .barplotter import barplot, barplot_shared
 from .statistics import get_statistics
 from .plot_neighbours import plot_neighs
+#from .tables import generate_tables
 

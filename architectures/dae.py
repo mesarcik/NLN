@@ -1,10 +1,10 @@
 import tensorflow as tf
 import numpy as np
 import time
-from models import (Encoder, 
-                   Decoder, 
-                   Autoencoder,
+from models import (Autoencoder,
                    Discriminator_x)
+from models_mvtec import Autoencoder as Autoencoder_MVTEC
+from models_mvtec import Discriminator_x as Discriminator_x_MVTEC 
 
 from utils.plotting  import  (generate_and_save_images,
                              generate_and_save_training,
@@ -105,8 +105,13 @@ def train(ae,discriminator, train_dataset,test_images,test_labels,args):
     return ae,discriminator
 
 def main(train_dataset,train_images, train_labels, test_images, test_labels, test_masks, args):
-    ae = Autoencoder(args)
-    discriminator = Discriminator_x(args)
+
+    if args.data == 'MVTEC':
+        ae = Autoencoder_MVTEC(args)
+        discriminator = Discriminator_x_MVTEC(args)
+    else:
+        ae = Autoencoder(args)
+        discriminator = Discriminator_x(args)
     ae, discriminator = train(ae,
                               discriminator,
                               train_dataset,

@@ -107,7 +107,7 @@ def accuracy_metrics(model,
 
         dists_recon = get_dists(neighbours_dist, args)
 
-        dists = np.mean(dists_recon, axis = tuple(range(1,dists_recon.ndim)))
+        dists = np.max(dists_recon, axis = tuple(range(1,dists_recon.ndim)))
         dists= roc_auc_score(labels_recon== args.anomaly_class, dists) 
         dists_seg,_ = get_segmentation(dists_recon, masks_recon, labels_recon, args)
 #        dists_auc = roc_auc_score(test_masks.flatten()>0, np.mean(error,axis=-1).flatten())
@@ -155,9 +155,9 @@ def get_segmentation(error, test_masks, test_labels, args):
     """
         Calculates AUROC result of segmentation
     """
-    fpr, tpr, thr  = roc_curve(test_masks.flatten()>0, np.mean(error,axis=-1).flatten())
+    fpr, tpr, thr  = roc_curve(test_masks.flatten()>0, np.max(error,axis=-1).flatten())
 #    prc = average_precision_score(test_masks.flatten()>0, np.mean(error,axis=-1).flatten())
-    precision, recall, thresholds = precision_recall_curve(test_masks.flatten()>0, np.mean(error,axis=-1).flatten())
+    precision, recall, thresholds = precision_recall_curve(test_masks.flatten()>0, np.max(error,axis=-1).flatten())
     prc = auc(recall, precision)
     AUC= roc_auc_score(test_masks.flatten()>0, np.mean(error,axis=-1).flatten())#, max_fpr=0.3)
 

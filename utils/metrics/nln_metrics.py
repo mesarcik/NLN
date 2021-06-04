@@ -1,6 +1,6 @@
 import tensorflow as tf
-import numpy as np 
-from time import time 
+import numpy as np
+from time import time
 import pickle
 from sklearn import metrics,neighbors
 from inference import infer, get_error
@@ -9,7 +9,6 @@ from model_config import *
 import itertools
 import warnings
 warnings.filterwarnings('ignore')
-
 
 
 def nln(z, z_query, x_hat_train, algorithm, neighbours, radius=None):
@@ -216,7 +215,7 @@ def get_nln_metrics(model,
     x_hat_train = infer(model[0], train_images, args, 'AE')
     x_hat = infer(model[0], test_images, args, 'AE')
 
-    d,max_auc,max_f1,max_neighbours,max_radius,index_counter = {},0,0,0,0,0
+    d,max_auc,max_neighbours,max_radius,index_counter = {},0,0,0,0
     dists_auc, sum_auc, mul_auc = [], [], []
     
     for n_bour in args.neighbors:
@@ -244,15 +243,25 @@ def get_nln_metrics(model,
                     error, test_labels_ = reconstruct_latent_patches(error, args, test_labels) 
 
             recon_error = get_error('AE', test_images, x_hat, mean=False)
-            recon_error, test_labels_ = reconstruct(recon_error, args, test_labels) 
+
+            if args.patches:
+                recon_error, test_labels_ = reconstruct(recon_error, args, test_labels) 
+            else:
+                recon_error, test_labels_ = recon_error, test_labels
+
             recon_error = process(np.nanmean(recon_error,axis=tuple(range(1,recon_error.ndim))), per_image=False)
 
             error = process(np.nanmean(error,axis=tuple(range(1,error.ndim))), per_image =False)
             dists = process(get_dists(neighbours_dist,args),per_image =False)
 
-            add = metrics.roc_auc_score(test_labels_==args.anomaly_class, error+dists+recon_error)
-            mul = metrics.roc_auc_score(test_labels_==args.anomaly_class, error*dists*recon_error)
-            dists = metrics.roc_auc_score(test_labels_==args.anomaly_class, dists)
+            if args.anomaly_type == 'MISO':
+                add = metrics.roc_auc_score(test_labels_==args.anomaly_class, error+dists+recon_error)
+                mul = metrics.roc_auc_score(test_labels_==args.anomaly_class, error+dists )
+                dists = metrics.roc_auc_score(test_labels_==args.anomaly_class, dists)
+            else:
+                add = metrics.roc_auc_score(test_labels_!=args.anomaly_class, error+dists+recon_error)
+                mul = metrics.roc_auc_score(test_labels_!=args.anomaly_class, error+dists)
+                dists = metrics.roc_auc_score(test_labels_!=args.anomaly_class, dists)
 
 
             dists_auc.append(dists)
@@ -260,11 +269,11 @@ def get_nln_metrics(model,
             mul_auc.append(mul)
 
             temp_args = [error,test_labels_,args.anomaly_class,args.neighbors,
-                         [float('nan')],n_bour,float('nan'), max_auc,max_f1,max_neighbours,
-                          max_radius,index_counter,d,t,dists_auc[-1], sum_auc[-1], mul_auc[-1]]
+                         [float('nan')],n_bour,float('nan'), max_auc,max_neighbours,
+                          max_radius,index_counter,d,t,dists_auc[-1], sum_auc[-1], mul_auc[-1],args.anomaly_type]
 
 
-            (max_auc,max_f1,max_neighbours,
+            (max_auc,max_neighbours,
                     max_radius,index_counter,d) =  get_max_score(temp_args)
 
         elif args.algorithm == 'frnn':
@@ -297,15 +306,15 @@ def get_nln_metrics(model,
 
                 temp_args = [error,test_labels_,args.anomaly_class,
                              args.neighbors, args.radius,n_bour,r, max_auc,
-                             max_f1,max_neighbours,max_radius,index_counter,d,t]
+                             max_neighbours,max_radius,index_counter,d,t, args.anomaly_type]
 
-                (max_auc,max_f1,max_neighbours,
+                (max_auc,max_neighbours,
                         max_radius,index_counter,d) = get_max_score(temp_args)
 
     with open('outputs/{}/{}/{}/latent_scores.pkl'.format(model_type,args.anomaly_class,args.model_name),'wb') as f:
         pickle.dump(d,f)
 
-    return max_auc,max_f1,max_neighbours,max_radius,np.max(dists_auc), np.max(sum_auc), np.max(mul_auc), x_hat, x_hat_train, neighbours_idx, neighbours_dist
+    return max_auc,max_neighbours,max_radius,np.max(dists_auc), np.max(sum_auc), np.max(mul_auc), x_hat, x_hat_train, neighbours_idx, neighbours_dist
 
 def get_max_score(args):
     """
@@ -315,34 +324,33 @@ def get_max_score(args):
         args (Namespace): arguments from cmd_args
     """
     (error,test_labels,anomaly,n_bours,
-           radius,n_bour,rad,max_auc,max_f1,
+           radius,n_bour,rad,max_auc,
            max_neighbours,max_radius,
-           index_counter,d,t, dist_auc, sum_auc, mul_auc) = args
-    
+           index_counter,d,t, dist_auc, sum_auc, mul_auc,anomaly_type) = args
 
-    fpr, tpr, thr  = metrics.roc_curve(test_labels==anomaly,error)
-    f1score = max([metrics.f1_score(y_true=test_labels==anomaly,
-                                    y_pred=error>t) for t in thr])
+    if anomaly_type == 'MISO':
+        fpr, tpr, thr  = metrics.roc_curve(test_labels==anomaly,error)
 
-#    a_u_c = metrics.auc(fpr, tpr)
-    a_u_c = metrics.roc_auc_score(test_labels==anomaly,error)
-    #a_u_c= metrics.average_precision_score(test_labels==anomaly,error)
+        a_u_c = metrics.roc_auc_score(test_labels==anomaly,error)
+
+    else:
+        fpr, tpr, thr  = metrics.roc_curve(test_labels!=anomaly,error)
+
+        a_u_c = metrics.roc_auc_score(test_labels!=anomaly,error)
 
     if a_u_c > max_auc: max_auc = a_u_c; max_neighbours = n_bour;max_radius = rad;
-    if f1score > max_f1: max_f1 = f1score 
 
-    d[index_counter] = [n_bour,rad,a_u_c,f1score]
+    d[index_counter] = [n_bour, rad, a_u_c, dist_auc, sum_auc, mul_auc]
     index_counter+=1
-    print("{}/{} f1-score: {}, auc-roc = {}, dist-auc = {}, sum-auc ={}, mul-acu ={} time elapsed = {}s".format(index_counter,
+    print("{}/{} auc-roc = {}, dist-auc = {}, sum-auc ={}, mul-acu ={} time elapsed = {}s".format(index_counter,
                                                          len(n_bours)*len(radius),
-                                                         f1score,
                                                          a_u_c,
                                                          dist_auc,
                                                          sum_auc,
                                                          mul_auc,
                                                          time()-t))
 
-    return max_auc,max_f1,max_neighbours,max_radius,index_counter,d
+    return max_auc,max_neighbours,max_radius,index_counter,d
 
 def get_dists(neighbours_dist, args):
 
@@ -353,7 +361,7 @@ def get_dists(neighbours_dist, args):
         srt,fnnsh = 0,n_patches**2
         dists_recon = []
         for i in range(0,len(dists),n_patches**2):
-            dists_recon.append(np.mean(dists[srt:fnnsh])) ## USING MAX
+            dists_recon.append(np.max(dists[srt:fnnsh])) ## USING MAX
             srt = fnnsh
             fnnsh += n_patches**2
 

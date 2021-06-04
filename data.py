@@ -20,16 +20,22 @@ def load_mnist(args):
         args (Namespace) Command line parameters from utils.cmd_input
     """
     (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.mnist.load_data()
-    train_images = np.reshape(train_images,(train_images.shape[0],28,28,1))
-    test_images = np.reshape(test_images,(test_images.shape[0],28,28,1))
+    train_images = np.expand_dims(train_images,axis=-1)
+    test_images = np.expand_dims(test_images,axis=-1)
 
-    if args.anomaly_class is not None:
-        indicies = np.argwhere(train_labels == int(args.anomaly_class))
-        sample_indicies = random.sample(list(indicies[:,0]), int(args.percentage_anomaly*
-                                                                  indicies.shape[0]))
+    if str(args.anomaly_class) is not None:
+        if args.anomaly_type == 'MISO':
+            indicies = np.argwhere(train_labels == int(str(args.anomaly_class)))
+            sample_indicies = random.sample(list(indicies[:,0]), int(args.percentage_anomaly*
+                                                                      indicies.shape[0]))
 
-        mask_train  = np.invert(train_labels == int(args.anomaly_class))
-        mask_train[sample_indicies] = True
+            mask_train  = np.invert(train_labels == int(str(args.anomaly_class)))
+        else: 
+            indicies = np.argwhere(train_labels != int(str(args.anomaly_class)))
+            sample_indicies = random.sample(list(indicies[:,0]), int(args.percentage_anomaly*
+                                                                      indicies.shape[0]))
+
+            mask_train  = train_labels == int(str(args.anomaly_class))
 
         train_images = train_images[mask_train]
         train_labels = train_labels[mask_train]
@@ -68,17 +74,24 @@ def load_fashion_mnist(args):
         args (Namespace) Command line parameters from utils.cmd_input
     """
     (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.fashion_mnist.load_data()
-    train_images = np.reshape(train_images,(train_images.shape[0],28,28,1))
-    test_images = np.reshape(test_images,(test_images.shape[0],28,28,1))
+    train_images = np.expand_dims(train_images,axis=-1)
+    test_images = np.expand_dims(test_images,axis=-1)
 
-    if args.anomaly_class is not None:
-        indicies = np.argwhere(train_labels == int(args.anomaly_class))
-        sample_indicies = random.sample(list(indicies[:,0]), int(args.percentage_anomaly*
-                                                                  indicies.shape[0]))
+    if str(args.anomaly_class) is not None:
+        if args.anomaly_type == 'MISO':
+            indicies = np.argwhere(train_labels == int(str(args.anomaly_class)))
+            sample_indicies = random.sample(list(indicies[:,0]), int(args.percentage_anomaly*
+                                                                      indicies.shape[0]))
 
-        mask_train  = np.invert(train_labels == int(args.anomaly_class))
+            mask_train  = np.invert(train_labels == int(str(args.anomaly_class)))
+        else: 
+            indicies = np.argwhere(train_labels != int(str(args.anomaly_class)))
+            sample_indicies = random.sample(list(indicies[:,0]), int(args.percentage_anomaly*
+                                                                      indicies.shape[0]))
+
+            mask_train  = train_labels == int(str(args.anomaly_class))
+
         mask_train[sample_indicies] = True
-
         train_images = train_images[mask_train]
         train_labels = train_labels[mask_train]
 
@@ -117,14 +130,21 @@ def load_cifar10(args):
     (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.cifar10.load_data()
     train_labels,test_labels = train_labels[:,0],test_labels[:,0] #because cifar labels are weird
 
-    if args.anomaly_class is not None:
-        indicies = np.argwhere(train_labels == int(args.anomaly_class))
-        sample_indicies = random.sample(list(indicies[:,0]), int(args.percentage_anomaly*
-                                                                  indicies.shape[0]))
+    if str(args.anomaly_class) is not None:
+        if args.anomaly_type == 'MISO':
+            indicies = np.argwhere(train_labels == int(str(args.anomaly_class)))
+            sample_indicies = random.sample(list(indicies[:,0]), int(args.percentage_anomaly*
+                                                                      indicies.shape[0]))
 
-        mask_train  = np.invert(train_labels == int(args.anomaly_class))
+            mask_train  = np.invert(train_labels == int(str(args.anomaly_class)))
+        else: 
+            indicies = np.argwhere(train_labels != int(str(args.anomaly_class)))
+            sample_indicies = random.sample(list(indicies[:,0]), int(args.percentage_anomaly*
+                                                                      indicies.shape[0]))
+
+            mask_train  = train_labels == int(str(args.anomaly_class))
+
         mask_train[sample_indicies] = True
-
         train_images = train_images[mask_train]
         train_labels = train_labels[mask_train]
 
@@ -161,7 +181,7 @@ def load_mvtec(args):
         args.limit (int) sets a args.limit on the number of test and training samples
         args.percentage_anomaly (float) adds a percentage of the anomalous/novel class to the training set
     """
-    (train_images, train_labels), (test_images, test_labels, test_masks) = get_mvtec_images(args.anomaly_class)
+    (train_images, train_labels), (test_images, test_labels, test_masks) = get_mvtec_images(str(args.anomaly_class))
 
     
     if args.limit is not None:
@@ -174,16 +194,16 @@ def load_mvtec(args):
         test_labels  = test_labels[test_indx] 
         test_masks = test_masks[test_indx] 
 
-    train_images = resize(train_images, (sizes[args.anomaly_class], 
-                                         sizes[args.anomaly_class], 
+    train_images = resize(train_images, (sizes[str(args.anomaly_class)], 
+                                         sizes[str(args.anomaly_class)], 
                                          args.input_shape[-1]))
 
-    test_images = resize(test_images, (sizes[args.anomaly_class], 
-                                       sizes[args.anomaly_class], 
+    test_images = resize(test_images, (sizes[str(args.anomaly_class)], 
+                                       sizes[str(args.anomaly_class)], 
                                        args.input_shape[-1]))
     test_masks = np.expand_dims(test_masks,axis=-1)
-    test_masks = resize(test_masks, (sizes[args.anomaly_class], 
-                                       sizes[args.anomaly_class], 
+    test_masks = resize(test_masks, (sizes[str(args.anomaly_class)], 
+                                       sizes[str(args.anomaly_class)], 
                                        1))[...,0]
     if args.crop:
         cropped_images = random_crop(train_images,crop_size=(args.crop_x, args.crop_y))

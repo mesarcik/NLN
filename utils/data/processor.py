@@ -34,7 +34,7 @@ def resize(data, dim):
 
     """
     #return transform.resize(data,(data.shape[0], dim[0], dim[1], dim[2]), anti_aliasing=False)
-    return tf.image.resize(data, [dim[0],dim[1]],antialias=False)
+    return tf.image.resize(data, [dim[0],dim[1]],antialias=False).numpy()
 
 def rgb2gray(rgb):
     """

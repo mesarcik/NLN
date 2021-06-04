@@ -2,9 +2,12 @@ import tensorflow as tf
 import numpy as np
 import time
 from models import (Encoder, 
-                    Decoder, 
                     Autoencoder, 
                     Discriminator_x)
+from models_mvtec import Encoder as Encoder_MVTEC
+from models_mvtec import Autoencoder as Autoencoder_MVTEC 
+from models_mvtec import Discriminator_x as Discriminator_x_MVTEC
+
 from utils.plotting  import  (generate_and_save_images,
                              generate_and_save_training,
                              save_training_curves)
@@ -96,9 +99,14 @@ def train(ae,encoder,discriminator,dataset,test_images,test_labels, args):
     return ae, discriminator,encoder
 
 def main(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, args):
-    ae = Autoencoder(args)
-    discriminator = Discriminator_x(args)
-    encoder = tf.keras.Sequential(Encoder(args))
+    if args.data == 'MVTEC':
+        ae = Autoencoder_MVTEC(args)
+        discriminator = Discriminator_x_MVTEC(args)
+        encoder = tf.keras.Sequential(Encoder_MVTEC(args))
+    else:
+        ae = Autoencoder(args)
+        discriminator = Discriminator_x(args)
+        encoder = tf.keras.Sequential(Encoder(args))
 
     ae,discriminator,encoder = train(ae,
                                      encoder,

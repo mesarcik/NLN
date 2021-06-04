@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 import os 
 import pandas as pd
-from sklearn.metrics import roc_curve, auc, f1_score,average_precision_score, roc_auc_score
+from sklearn.metrics import roc_curve, auc, average_precision_score, roc_auc_score
 from math import isnan
 from inference import infer, get_error
 from utils import cmd_input 
@@ -11,46 +11,36 @@ from utils.data import reconstruct
 
 def calculate_metrics(error,  
                       test_labels,
-                      anomaly,
-                      f1=False):
+                      args):
     """
         Returns the AUROC and F1 score of a particular model 
 
         error (np.array): the reconstruction error of a given model
         test_labels (np.array): the test labels from the testing set
-        anomaly (int): the anomlous class label
-        f1 (bool): return f1 score?
+        args (Namespace):  arguments from utils.cmd_input
 
     """
-    error = (error - np.min(error))/(np.max(error) - np.min(error))
-    fpr, tpr, thr  =roc_curve(test_labels==anomaly, error)
-    if f1:
-        f1 = max([f1_score(test_labels==anomaly,error>t) for t in thr])
-    else: 
-        f1 = None
+    if args.anomaly_type == 'MISO':
+        _auc = roc_auc_score(test_labels==args.anomaly_class, error)
+    else:
+        _auc = roc_auc_score(test_labels!=args.anomaly_class, error)
 
-    auprc =   average_precision_score(test_labels==anomaly, error)
-#    _auc = auc(fpr,tpr)
-    _auc = roc_auc_score(test_labels==anomaly, error)#, max_fpr=0.3)
-
-    return _auc,f1
+    return _auc
 
 
 def get_classifcation(model_type,
                       model,
                       test_images,
                       test_labels,
-                      args,
-                      f1=False):
+                      args):
     """
-        Returns the AUROC and F1 score of a particular model 
+        Returns the AUROC score of a particular model 
 
         model_type (str): type of model (AE,VAE,....)
         model (tf.keras.Model): the model used
         test_images (np.array): the test images from the testing set
         test_labels (np.array): the test labels from the testing set
         args (Namespace):  arguments from utils.cmd_input
-        f1 (bool): return f1 score?
 
     """
     x_hat = infer(model[0], test_images, args, 'AE')
@@ -63,8 +53,8 @@ def get_classifcation(model_type,
     else:
         error = get_error('AE', test_images, x_hat, mean=True)
 
-    auc,f1 = calculate_metrics(error,test_labels,args.anomaly_class,f1)
-    return auc,f1
+    auc = calculate_metrics(error,test_labels,args)
+    return auc
 
 def save_metrics(model_type,
                  args,
@@ -105,6 +95,7 @@ def save_metrics(model_type,
                                      'Latent_Dim',
                                      'Patch_Size',
                                      'Class',
+                                     'Type',
                                      'Neighbour',
                                      #'Radius',
                                      'AUC_Reconstruction_Error',
@@ -129,6 +120,7 @@ def save_metrics(model_type,
                     'Latent_Dim':cmd_input.args.latent_dim,
                     'Patch_Size':args.patch_x,
                     'Class':args.anomaly_class,
+                    'Type':args.anomaly_type,
                     'Neighbour':neighbour,
                     #'Radius':radius,
                     'AUC_Reconstruction_Error':auc_reconstruction,

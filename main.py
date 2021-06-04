@@ -18,7 +18,7 @@ def main():
     elif cmd_input.args.data == 'CIFAR10':
         data  = load_cifar10(cmd_input.args)
 
-    elif cmd_input.args.data == 'MVTEC':
+    if cmd_input.args.data == 'MVTEC':
         data  = load_mvtec(cmd_input.args)
         test_masks = data[5]
 
@@ -42,10 +42,10 @@ def main():
     #train_nnae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
     #train_ae_ssim(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
     train_ae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
-    #train_dae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
-    #train_ganomaly(train_dataset,train_images,train_labels,test_images,test_labels,test_masks, cmd_input.args)
-    #train_vae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
-    #train_aae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
+    train_dae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
+    train_ganomaly(train_dataset,train_images,train_labels,test_images,test_labels,test_masks, cmd_input.args)
+    train_vae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
+    train_aae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
 
 
 

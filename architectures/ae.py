@@ -3,9 +3,8 @@ import numpy as np
 from sklearn import neighbors
 from matplotlib import pyplot as plt
 import time
-from models import (Encoder, 
-                   Decoder, 
-                   Autoencoder)
+from models import  Autoencoder
+from models_mvtec import Autoencoder as Autoencoder_MVTEC
 
 from utils.plotting  import  (generate_and_save_images,
                              generate_and_save_training)
@@ -84,7 +83,11 @@ def train(ae,train_dataset,train_images, test_images,test_labels,args,verbose=Tr
     return ae
 
 def main(train_dataset,train_images,train_labels,test_images,test_labels, test_masks,args):
-    ae = Autoencoder(args)
+    if args.data == 'MVTEC':
+        ae = Autoencoder_MVTEC(args)
+    else:
+        ae = Autoencoder(args)
+
     ae = train(ae,train_dataset, train_images,test_images,test_labels,args)
     end_routine(train_images, test_images, test_labels, test_masks, [ae], 'AE', args)
 

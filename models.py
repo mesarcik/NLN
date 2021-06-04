@@ -7,62 +7,87 @@ tf.keras.backend.set_floatx('float32')
 class Encoder(tf.keras.layers.Layer):
     def __init__(self,args):
         super(Encoder, self).__init__()
-        self.conv = []
+        self.input_layer = layers.InputLayer(input_shape=args.input_shape)
+        self.conv, self.pool, self.batchnorm = [],[],[]
         self.latent_dim  = args.latent_dim
 
-        self.conv.append(layers.Conv2D(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        self.conv.append(layers.Conv2D(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        if args.input_shape[1] >32:
-            self.conv.append(layers.Conv2D(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        self.conv.append(layers.Conv2D(n_filters, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        if args.input_shape[1] >64:
-            self.conv.append(layers.Conv2D(n_filters*2, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        self.conv.append(layers.Conv2D(n_filters*2, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        if args.input_shape[1] >128:
-            self.conv.append(layers.Conv2D(n_filters*4, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        self.conv.append(layers.Conv2D(n_filters*2, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        self.conv.append(layers.Conv2D(n_filters, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        self.conv.append(layers.Conv2D(self.latent_dim, (8, 8), strides=1, activation='linear', padding='valid'))
-        
-        self.reshape = layers.Reshape((self.latent_dim,))
+        for n in range(n_layers):
+            self.conv.append(layers.Conv2D(filters = n_filters//(2**n),
+                                       kernel_size = (2,2),
+                                       #strides = (2,2),
+                                       padding = 'same',
+                                       activation='relu'))
+            self.pool.append(layers.MaxPooling2D(pool_size=(2,2),padding='same'))
+
+            self.batchnorm.append(layers.BatchNormalization())
+
+        #output shape = 2,2
+        self.flatten = layers.Flatten()
+        self.dense_ae = layers.Dense(self.latent_dim, activation=None)
+
+        self.dense_vae = layers.Dense(n_filters, activation='relu')
+        self.mean = layers.Dense(self.latent_dim)
+        self.logvar = layers.Dense(self.latent_dim)
 
     def call(self, x,vae=False):
+        x = self.input_layer(x)
 
-        for layer in self.conv:
-            x = layer(x)
-        x = self.reshape(x)
-        return x
+        for layer in range(n_layers):
+            x = self.conv[layer](x)
+            if layer !=n_layers-1:
+                x = self.pool[layer](x)
+            x = self.batchnorm[layer](x)
+        x = self.flatten(x)
+
+        if vae:
+            x = self.dense_vae(x)
+            mean = self.mean(x)
+            logvar = self.logvar(x)
+            return [mean,logvar]
+        else:
+            x = self.dense_ae(x)
+            return x
 
 class Decoder(tf.keras.layers.Layer):
     def __init__(self,args):
         super(Decoder, self).__init__()
         self.latent_dim = args.latent_dim
         self.input_layer = layers.InputLayer(input_shape=[self.latent_dim,])
-        self.inp_shape = args.input_shape
+        self.dense= layers.Dense(args.input_shape[0]//2**(n_layers-1) *
+                                 args.input_shape[1]//2**(n_layers-1) *
+                                 n_filters,activation='relu')
+        self.reshape = layers.Reshape((args.input_shape[0]//2**(n_layers-1),
+                                       args.input_shape[1]//2**(n_layers-1),
+                                       n_filters))
 
-        self.reshape = layers.Reshape((1,1,self.latent_dim))
+        self.conv, self.pool, self.batchnorm = [],[],[]
+        for l in range(n_layers):
 
-        self.conv = []
-        self.conv.append(layers.Conv2DTranspose(n_filters, (8, 8), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='valid'))
-        self.conv.append(layers.Conv2D(n_filters*2, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        self.conv.append(layers.Conv2D(n_filters*4, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        if args.input_shape[1] >128:
-            self.conv.append(layers.Conv2DTranspose(n_filters*2, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        self.conv.append(layers.Conv2D(n_filters*2, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        if args.input_shape[1] >64:
-            self.conv.append(layers.Conv2DTranspose(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        self.conv.append(layers.Conv2D(n_filters, (3, 3), strides=1, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        if args.input_shape[1] >32:
-            self.conv.append(layers.Conv2DTranspose(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        self.conv.append(layers.Conv2DTranspose(n_filters, (4, 4), strides=2, activation=layers.LeakyReLU(alpha=0.2), padding='same'))
-        self.conv.append(layers.Conv2DTranspose(self.inp_shape[-1], (4, 4), strides=2, activation='sigmoid', padding='same'))
+            self.conv.append(layers.Conv2DTranspose(filters = n_filters//(2** n_layers-l),
+                                               kernel_size = (2,2),
+                                               #strides = (2,2),
+                                               padding = 'same',
+                                               activation='relu'))
 
-        self.flatten = layers.Flatten()
+            self.pool.append(layers.UpSampling2D(size=(2,2)))
+            self.batchnorm.append(layers.BatchNormalization())
+
+        self.conv_output = layers.Conv2DTranspose(filters = args.input_shape[-1],
+                                           kernel_size = (2,2),
+                                           padding = 'same',
+                                           activation='sigmoid')
 
     def call(self, x):
+        x = self.input_layer(x)
+        x = self.dense(x)
         x = self.reshape(x)
-        for layer in self.conv:
-            x = layer(x)
+
+        for layer in range(n_layers -1):
+            x = self.conv[layer](x)
+            x = self.pool[layer](x)
+            x = self.batchnorm[layer](x)
+
+        x = self.conv_output(x)
         return  x
 
 class Autoencoder(tf.keras.Model):
@@ -189,48 +214,3 @@ class VAE(tf.keras.Model):
         z = self.reparameterize(mean, logvar)
         x_hat = self.decode(z)
         return x_hat 
-
-class Remap(tf.keras.Model):
-    def __init__(self,args):
-        super(Remap, self).__init__()
-        self.latent_dim = args.latent_dim
-        self.input_layer = layers.InputLayer(input_shape=[self.latent_dim,])
-        self.dense_layers = []
-
-        for layer in range(3):
-            self.dense_layers.append(layers.Dense(32*(layer+1),activation='relu'))
-
-        self.flatten = layers.Flatten()
-        self.dense = layers.Dense(self.latent_dim, activation=None)
-
-    def call(self, x):
-        x = self.input_layer(x)
-
-        for layer in range(3):
-            x = self.dense_layers[layer](x)
-        
-        x = self.flatten(x)
-        x = self.dense(x)
-        return  x
-
-class Discriminator_bigan(tf.keras.Model):
-    def __init__(self):
-        super(Discriminator_bigan, self).__init__()
-        self.network = Encoder()
-        self.flatten = layers.Flatten()
-
-        self.dense_z= layers.Dense(n_filters*8,activation='relu')
-        self.flatten_z= layers.Flatten()
-
-        self.dense_concat = layers.Dense(1024, activation='relu')
-        self.output_concat = layers.Dense(1,activation='sigmoid')
-
-    def call(self,x,z):
-        o_x = self.network(x,vae=False)
-        o_z = self.dense_z(z)
-        o_z = self.flatten_z(o_z)
-        o = layers.concatenate([o_x,o_z])
-        o = self.dense_concat(o) 
-
-        return self.output_concat(o),o 
-

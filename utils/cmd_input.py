@@ -11,6 +11,8 @@ parser.add_argument('-limit',metavar='-l', type=str, default='None',
                     help = 'Limit on the number of samples in training data ')
 parser.add_argument('-anomaly_class',metavar='-a', type=str,  default=2,
                     help = 'The labels of the anomalous class')
+parser.add_argument('-anomaly_type',metavar='-at', type=str,  default='MISO',
+                    choices={'MISO','SIMO'},help = 'The anomaly scheme whether it is MISO or SIMO')
 parser.add_argument('-percentage_anomaly', metavar='-p', type=float, default=0,
                     help = 'The percentage of anomalies in the training set')
 parser.add_argument('-epochs', metavar='-e', type=int, default=100,
@@ -42,7 +44,7 @@ parser.add_argument('-crop_y', metavar='-cy', type=int,
 
 parser.add_argument('-patches', metavar='-ptch', type=bool,default=False, 
                     help = 'Train on patches?')
-parser.add_argument('-patch_x', metavar='-px', type=int,
+parser.add_argument('-patch_x', metavar='-px', type=int, default=-1,
                     help = 'x-dimension of patchsize ')
 parser.add_argument('-patch_y', metavar='-py', type=int, 
                     help = 'y-dimension of patchsize ')
@@ -55,7 +57,7 @@ args = parser.parse_args()
 args.model_name = new_name()
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = args.debug
 
-dim = 1024# sizes[args.anomaly_class]
+dim = sizes[args.anomaly_class]
 if args.data == 'MNIST' or args.data == 'FASHION_MNIST':
     args.input_shape =(28,28,1)
 

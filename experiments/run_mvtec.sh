@@ -7,7 +7,7 @@ percentage=0.0
 seed=$(openssl rand -hex 3)
 d=$(date +'%m-%d-%Y-%I-%M_')
 
-for patch in 128 64 32
+for patch in 128 #64 32
 	do
 		for i in bottle cable capsule carpet grid hazelnut leather metal_nut pill screw tile toothbrush transistor wood zipper
 		do
@@ -29,7 +29,7 @@ for patch in 128 64 32
 								  -patch_y $patch \
 								  -patch_stride_x $patch \
 								  -patch_stride_y $patch \
-							      -seed 05-28-2021-05-01_4e26e5 | tee -a mvtec.log
+							      -seed $d$seed | tee -a mvtec.log
 		done
 done
 #$d$seed 
