@@ -59,7 +59,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = args.debug
 
 dim = sizes[args.anomaly_class]
 if args.data == 'MNIST' or args.data == 'FASHION_MNIST':
-    args.input_shape =(28,28,1)
+    args.input_shape =(dim,dim,1)
 
 elif args.data == 'CIFAR10':
     args.input_shape =(dim,dim,3)

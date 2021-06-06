@@ -20,8 +20,8 @@ def load_mnist(args):
         args (Namespace) Command line parameters from utils.cmd_input
     """
     (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.mnist.load_data()
-    train_images = np.expand_dims(train_images,axis=-1)
-    test_images = np.expand_dims(test_images,axis=-1)
+    train_images = resize(np.expand_dims(train_images,axis=-1), (32, 32 ,1))
+    test_images =  resize(np.expand_dims(test_images,axis=-1), (32, 32 ,1))
 
     if str(args.anomaly_class) is not None:
         if args.anomaly_type == 'MISO':
@@ -74,8 +74,8 @@ def load_fashion_mnist(args):
         args (Namespace) Command line parameters from utils.cmd_input
     """
     (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.fashion_mnist.load_data()
-    train_images = np.expand_dims(train_images,axis=-1)
-    test_images = np.expand_dims(test_images,axis=-1)
+    train_images = resize(np.expand_dims(train_images,axis=-1), (32, 32 ,1))
+    test_images =  resize(np.expand_dims(test_images,axis=-1), (32, 32 ,1))
 
     if str(args.anomaly_class) is not None:
         if args.anomaly_type == 'MISO':

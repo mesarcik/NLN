@@ -38,19 +38,19 @@ def generate_tables(args,verbose=False):
         dataset (str) name of dataset  
     """
     TYPE= args.anomaly_type #'SIMO'
-    ERROR = 'Mul_Recon_NLN_Dist'
+    ERROR = ['Distance_AUC','AUC_NLN_Error','Sum_Recon_NLN_Dist', 'Mul_Recon_NLN_Dist'][0]
 
     df = add_df_parameters(args)
     df = df[df.Type==TYPE]
 
     df_agg_recon = df.groupby(['Model',
                               'Class',
-                              'Latent_Dim']).agg({'AUC_Reconstruction_Error': 'mean'}).reset_index()
+                              'Latent_Dim']).agg({'AUC_Reconstruction_Error': 'max'}).reset_index()
 
     df_agg_nln = df.groupby(['Model',
-                        'Class',
-                        'Latent_Dim',
-                        'Neighbour']).agg({ERROR: 'mean'}).reset_index()
+                            'Class',
+                            'Latent_Dim',
+                            'Neighbour']).agg({ERROR: 'max'}).reset_index()
     improvement = [] 
     performance, model_type, nneighbours, score  = {}, '', -1, 0
     for model in ['AE','AAE', 'VAE', 'DAE', 'GANomaly']:
