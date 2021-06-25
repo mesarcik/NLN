@@ -1,5 +1,5 @@
 # `NLN`: Nearest-Latent-Neighbours
-A repository containing the implementation of the paper entitled "Nearest Neighbours Improves Multi-class Novelty Detection of Autoencoders"
+A repository containing the implementation of the paper entitled "Nearest Neighbours Improves Novelty Detection of Autoencoders"
 
 ## Installation 
 Install conda environment by:
