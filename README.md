@@ -1,4 +1,3 @@
-test to see if anonymised repo works.
 # `NLN`: Nearest-Latent-Neighbours
 A repository containing the implementation of the paper entitled "Nearest Neighbours Improves Multi-class Novelty Detection of Autoencoders"
 
