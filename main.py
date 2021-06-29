@@ -1,6 +1,5 @@
 import numpy as np 
 import tensorflow as tf
-import sys
 from data import *
 from utils import cmd_input 
 from architectures import *  
@@ -34,9 +33,6 @@ def main():
     print(" __________________________________ \n Save name {}".format(
                                                cmd_input.args.model_name))
     print(" __________________________________ \n")
-
-    with open("temp_log", "a") as f:
-        f.write('{} \t {}\n'.format(cmd_input.args.anomaly_class, cmd_input.args.model_name))
 
     train_ae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
     train_dae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
