@@ -13,12 +13,17 @@ def calculate_metrics(error,
                       test_labels,
                       args):
     """
-        Returns the AUROC and F1 score of a particular model 
+        Returns the AUROC of a particular model 
 
+        Parameters
+        ----------
         error (np.array): the reconstruction error of a given model
         test_labels (np.array): the test labels from the testing set
         args (Namespace):  arguments from utils.cmd_input
 
+        Returns
+        -------
+        _auc (np.float32): return the auc
     """
     if args.anomaly_type == 'MISO':
         _auc = roc_auc_score(test_labels==args.anomaly_class, error)
@@ -36,12 +41,17 @@ def get_classifcation(model_type,
     """
         Returns the AUROC score of a particular model 
 
+        Parameters
+        ----------
         model_type (str): type of model (AE,VAE,....)
-        model (tf.keras.Model): the model used
+        model (list): the model used
         test_images (np.array): the test images from the testing set
         test_labels (np.array): the test labels from the testing set
         args (Namespace):  arguments from utils.cmd_input
 
+        Returns
+        -------
+        auc (np.float32): return the auc
     """
     x_hat = infer(model[0], test_images, args, 'AE')
 
@@ -74,16 +84,23 @@ def save_metrics(model_type,
                  mul_auc=None):
     
     """
-        Either appends or saves a new .csv file with the top r and K 
+        Either appends or saves a new .csv file with the top K 
 
-        model_type (str): Type of model (AE,VAE,...)
-        name (Namespace): args from utils/cmd_input
-        auc_reconstruction (double): the AUROC reconstruction error 
-        seg_prc (double): the F1 score for reconstruction error 
-        neighbour (int): maximum number of neighbours (K) for best NLN error
-        radius (double): radius size of best NLN error
-        auc_latent (double): the AUROC score for NLN  
-        seg_prc_nln (double): the F1 score for NLN
+        Parameters
+        ----------
+        model_type (str): type of model (vae,ae,..)
+        args (Namespace):  arguments from utils.cmd_input
+        auc_reconstruction (np.float32): detection auroc for ae based reconstruction error 
+        seg_prc (np.float32): segmentation aucprc for ae based reconstruction error 
+        neighbour (int): #neighbours
+        radius (double): optional radius size if using frnn
+        auc_latent (np.float32): Detection auroc using latent distance
+        seg_prc_nln (np.float32): Segmentation auprc using nln 
+        ... (optional arguments)
+
+        Returns
+        -------
+        nothing
     """
     
     if isnan(radius): radius = 'nan'

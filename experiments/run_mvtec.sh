@@ -1,5 +1,5 @@
 #!/bin/sh
-echo "Logging for run_mvtecr.sh at time: $(date)." >> log.log
+echo "Logging for run_mvtec.sh at time: $(date)." >> log.log
 
 limit=None
 epochs=100

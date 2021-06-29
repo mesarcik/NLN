@@ -17,16 +17,19 @@ def nln(z, z_query, x_hat_train, algorithm, neighbours, radius=None):
 
         Parameters
         ----------
-        z (np.array): training set latent space
-        z_query (np.array): test set latent space 
+        z (np.array): training set latent space vector
+        z_query (np.array): test set latent space vector
         x_hat_train (np.array): reconstruction of training data
         algorithm (str): KNN or frNN
         neighbours (int): number of neighbours 
-        radius (double): the frnn radius
+        radius (double): Optional, the frnn radius
         
         Returns
         -------
-        (np.array, np.array, np.array, np.array)
+        neighbours_dist (np.array) : latent neigbour distance vector 
+        neighbours_idx (np.array): index of neigbours in z 
+        x_hat_train (np.array): reconstruction of training data, adjusted during frNN
+        neighbour_mask (np.array): used for frNN to determine if a sample has neighbours
 
     """
     if algorithm == 'knn':
@@ -92,7 +95,7 @@ def get_nln_errors(model,
         
         Returns
         -------
-        np.array
+        error (np.array) : nln error per patch (if using) 
 
     """
 
@@ -164,25 +167,6 @@ def get_nln_errors(model,
 
         error[neighbour_mask] = error_recon[neighbour_mask]
 
-    elif model_type == 'NNAE':
-        x_hat = infer(model[0], test_images, args, 'AE')
-        z = infer(model[0].encoder, test_images, args, 'encoder')
-        z_hat = infer(model[1], [x_hat, neighbours], args, 'NNAE')
-
-        error = np.abs(z - z_hat)
-
-    elif model_type == 'RESNET_AE':
-
-        #TODO: Inefficeint way of doing things
-        test_images = resnet(test_images).numpy()
-        error = [] 
-        for n in range(neighbours.shape[1]):
-            error.append(test_images - resnet(neighbours[:,n,:]).numpy())
-        error = np.array(error)
-        error = np.swapaxes(error, 0, 1)
-            
-        error = np.mean(error, axis =1) #nanmean for frNN 
-
     return error
 
 
@@ -206,7 +190,16 @@ def get_nln_metrics(model,
         
         Returns
         -------
-        np.array
+        max_auc (float32): maximum auroc for the given KNN
+        max_neighbours (float32): optimal number of neighbours for AUROC
+        max_radius (float32): optimal radius size for frNN
+        max_dists_auc (float32): optimal distance based auroc  
+        max_sum_auc (float32): optimal auroc from adding distance and nln 
+        max_mul_auc (float32): optimal auroc from multiplying dists and nln
+        x_hat (np.array): Reconstructions of test data
+        x_hat_train (np.array): Reconstructions of training data 
+        neighbours_idx (np.array): Indexes of neigbours in z_train
+        neighbours_dist (np.array): Latent distances for each neighbour
 
     """
 
@@ -263,7 +256,6 @@ def get_nln_metrics(model,
                 mul = metrics.roc_auc_score(test_labels_!=args.anomaly_class, 0.3*error+0.7*dists)
                 dists = metrics.roc_auc_score(test_labels_!=args.anomaly_class, dists)
 
-
             dists_auc.append(dists)
             sum_auc.append(add)
             mul_auc.append(mul)
@@ -277,6 +269,7 @@ def get_nln_metrics(model,
                     max_radius,index_counter,d) =  get_max_score(temp_args)
 
         elif args.algorithm == 'frnn':
+            #TODO: add MISO and SIMO distinctions
             for r in  args.radius:
                 t = time()
                 neighbours_dist, neighbours_idx, x_hat_train, neighbour_mask = nln(z, 
@@ -318,10 +311,20 @@ def get_nln_metrics(model,
 
 def get_max_score(args):
     """
-    TODO: make work for MVTEC
         Find the maximum AUROC score for the model 
 
-        args (Namespace): arguments from cmd_args
+        Parameters
+        ----------
+        args (dictionary): arguments  shown below
+
+        Returns
+        -------
+        max_auc (float32): maximum detection auroc 
+        max_neighbours (float32): maximum KNN
+        max_radius (float32): maximum radius for frNN
+        index_counter (float32): index for maximum
+        d (float32): dictionary of optimal vals 
+
     """
     (error,test_labels,anomaly,n_bours,
            radius,n_bour,rad,max_auc,
@@ -353,6 +356,19 @@ def get_max_score(args):
     return max_auc,max_neighbours,max_radius,index_counter,d
 
 def get_dists(neighbours_dist, args):
+    """
+        Reconstruct distance vector to original dimensions when using patches
+
+        Parameters
+        ----------
+        neighbours_dist (np.array): Vector of per neighbour distances
+        args (Namespace): cmd_args 
+
+        Returns
+        -------
+        dists (np.array): reconstructed patches if necessary
+
+    """
 
     dists = np.mean(neighbours_dist, axis = tuple(range(1,neighbours_dist.ndim)))
 
