@@ -1,6 +1,9 @@
 import os
 from utils import cmd_input 
-from reporting import heatmap, barplot, barplot_shared
+from reporting import (generate_tables, 
+                        generate_residual_maps, 
+                        generate_segmenatation_maps, 
+                        mvtec_eval)
 
 def report():
     '''
@@ -21,9 +24,9 @@ def report():
     elif args.data == 'MVTEC':
         if os.path.exists('outputs/results_{}_{}.csv'.format(cmd_input.args.data,
                                                              cmd_input.args.seed)):
-            mvtec_eval()
-            generate_residual_maps()
-            generate_segmenatation_maps()
+            mvtec_eval(cmd_input.args)
+            generate_residual_maps(cmd_input.args)
+            generate_segmenatation_maps(cmd_input.args)
         else:
             raise Exception('{} data does not exist'.format(cmd_input.args.data))
 
