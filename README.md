@@ -42,7 +42,7 @@ You will need to download the [MVTec anomaly detection dataset](https://www.mvte
 ## Training 
 Run the following: 
 ```
-    python main.py -anomaly_class <0,1,2,3,4,5,6,7,8,9> \
+    python main.py -anomaly_class <0,1,2,3,4,5,6,7,8,9,bottle,cable,...> \
                    -percentage_anomaly <float> \
                    -limit <int> \
                    -epochs <int> \
