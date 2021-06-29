@@ -2,18 +2,20 @@ import tensorflow as tf
 import numpy as np
 import time
 from models import VAE
+from models_mvtec import VAE as VAE_MVTEC
 from utils.plotting  import  (generate_and_save_images,
                              generate_and_save_training,
                              save_training_curves)
 from utils.training import print_epoch,save_checkpoint
-from utils.metrics import nearest_error,get_classifcation,save_metrics
-from model_config import BUFFER_SIZE,BATCH_SIZE,cross_entropy
+from model_config import  *
 
-optimizer = tf.keras.optimizers.Adam()#1e-4)
+from .helper import end_routine
+
+optimizer = tf.keras.optimizers.Adam()
 
 def l2_loss(x,x_hat):
-    return tf.reduce_sum(tf.math.abs(tf.subtract(tf.keras.backend.flatten(x),
-                                  tf.keras.backend.flatten(x_hat))))
+    return mse(tf.keras.backend.flatten(x),
+                                  tf.keras.backend.flatten(x_hat))
 
 def KL_loss(logvar, mean):
     kl_loss = 1 + logvar - tf.square(mean) - tf.exp(logvar)
@@ -65,33 +67,13 @@ def train(vae,train_dataset,test_images,test_labels,args):
     return vae 
 
 
-def main(train_dataset,train_images,train_labels,test_images,test_labels,args):
-    vae = VAE(args)
+def main(train_dataset,train_images,train_labels,test_images, test_labels, test_masks, args):
+    if args.data == 'MVTEC':
+        vae = VAE_MVTEC(args)
+    else:
+        vae = VAE(args)
     vae = train(vae,train_dataset,test_images,test_labels,args)
-    save_training_curves(vae,args,test_images,test_labels,'VAE')
-    auc_latent, f1_latent, neighbour,radius = nearest_error(vae,
-                                                     train_images,
-                                                     test_images,
-                                                     test_labels,
-                                                     'VAE',
-                                                     args,
-                                                     args.data == 'HERA')
+    end_routine(train_images, test_images, test_labels, test_masks, [vae], 'VAE', args)
 
-    auc_recon ,f1_recon = get_classifcation('VAE',
-                                             vae,
-                                             test_images,
-                                             test_labels,
-                                             args,
-                                             hera = args.data == 'HERA',
-                                             f1=True)
-    save_metrics('VAE',
-                 args,
-                 auc_recon, 
-                 f1_recon,
-                 neighbour,
-                 radius,
-                 auc_latent,
-                 f1_latent)
-    
 if __name__  == '__main__':
     main()

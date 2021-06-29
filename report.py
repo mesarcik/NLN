@@ -9,8 +9,9 @@ def report():
     '''
 
     if os.path.exists('outputs/results_{}.csv'.format(cmd_input.args.data)):
-        heatmap(cmd_input.args.data)
-        barplot(cmd_input.args.data)
+        #heatmap(cmd_input.args.data)
+        #barplot(cmd_input.args.data)
+        #generate_tables(cmd_input.args)
     else:
         raise Exception('Need {} results to call \
                          heatmat() and barplot()'.format(cmd_input.args.data))

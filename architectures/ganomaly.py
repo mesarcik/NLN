@@ -2,31 +2,32 @@ import tensorflow as tf
 import numpy as np
 import time
 from models import (Encoder, 
-                    Decoder, 
                     Autoencoder, 
                     Discriminator_x)
+from models_mvtec import Encoder as Encoder_MVTEC
+from models_mvtec import Autoencoder as Autoencoder_MVTEC 
+from models_mvtec import Discriminator_x as Discriminator_x_MVTEC
+
 from utils.plotting  import  (generate_and_save_images,
                              generate_and_save_training,
                              save_training_curves)
 from utils.training import print_epoch,save_checkpoint
-from utils.metrics import get_classifcation,nearest_error,save_metrics
-from model_config import BUFFER_SIZE,BATCH_SIZE,cross_entropy
+from model_config import *
+
+from .helper import end_routine
 
 ae_optimizer = tf.keras.optimizers.Adam(1e-4)
 discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
 encoder_optimizer = tf.keras.optimizers.Adam(1e-4)
 
 def ae_loss(x,x_hat,loss_weight):
-    return loss_weight*tf.reduce_mean(tf.math.abs(tf.subtract(x, 
-                                                              x_hat)))
+    return loss_weight*mse(x,x_hat)
 
 def discriminator_loss(real_output, fake_output,loss_weight):
-    return loss_weight*tf.reduce_mean(tf.math.abs(tf.subtract(real_output, 
-                                                              fake_output)))
+    return loss_weight*mse(real_output, fake_output)
 
 def encoder_loss(z,z_hat, loss_weight):
-    return loss_weight*tf.reduce_mean(tf.math.abs(tf.subtract(z, 
-                                                              z_hat)))
+    return loss_weight*mse(z,z_hat)
 
 @tf.function
 def train_step(ae,encoder,discriminator,images):
@@ -94,10 +95,15 @@ def train(ae,encoder,discriminator,dataset,test_images,test_labels, args):
 
     return ae, discriminator,encoder
 
-def main(train_dataset,train_images,train_labels,test_images,test_labels,args):
-    ae = Autoencoder(args)
-    discriminator = Discriminator_x(args)
-    encoder = tf.keras.Sequential(Encoder(args))
+def main(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, args):
+    if args.data == 'MVTEC':
+        ae = Autoencoder_MVTEC(args)
+        discriminator = Discriminator_x_MVTEC(args)
+        encoder = tf.keras.Sequential(Encoder_MVTEC(args))
+    else:
+        ae = Autoencoder(args)
+        discriminator = Discriminator_x(args)
+        encoder = tf.keras.Sequential(Encoder(args))
 
     ae,discriminator,encoder = train(ae,
                                      encoder,
@@ -107,35 +113,8 @@ def main(train_dataset,train_images,train_labels,test_images,test_labels,args):
                                      test_labels,
                                      args)
 
-    save_training_curves([ae,discriminator,encoder],
-                          args,
-                          test_images,
-                          test_labels,
-                          'GANomaly')
+    end_routine(train_images, test_images, test_labels, test_masks, [ae,discriminator,encoder], 'GANomaly', args)
 
-    auc_latent, f1_latent, neighbour,radius  = nearest_error([ae,discriminator,encoder],
-                                                     train_images,
-                                                     test_images,
-                                                     test_labels,
-                                                     'GANomaly',
-                                                     args,
-                                                     args.data == 'HERA')
-
-    auc_recon ,f1_recon = get_classifcation('GANomaly',
-                                             [ae,discriminator,encoder],
-                                             test_images,
-                                             test_labels,
-                                             args,
-                                             hera = args.data == 'HERA',
-                                             f1=True)
-    save_metrics('GANomaly',
-                 args,
-                 auc_recon, 
-                 f1_recon,
-                 neighbour,
-                 radius,
-                 auc_latent,
-                 f1_latent)
     
 if __name__  == '__main__':
     main()

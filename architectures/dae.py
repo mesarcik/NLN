@@ -1,26 +1,26 @@
 import tensorflow as tf
 import numpy as np
 import time
-from models import (Encoder, 
-                   Decoder, 
-                   Autoencoder,
+from models import (Autoencoder,
                    Discriminator_x)
+from models_mvtec import Autoencoder as Autoencoder_MVTEC
+from models_mvtec import Discriminator_x as Discriminator_x_MVTEC 
 
 from utils.plotting  import  (generate_and_save_images,
                              generate_and_save_training,
                              save_training_curves)
 
 from utils.training import print_epoch,save_checkpoint
-from utils.metrics import get_classifcation,nearest_error,save_metrics
 from model_config import *
 
-ae_optimizer = tf.keras.optimizers.Adam()#1e-5)
+from .helper import end_routine
+
+ae_optimizer = tf.keras.optimizers.Adam()
 discriminator_optimizer = tf.keras.optimizers.Adam(1e-5)
 generator_optimizer = tf.keras.optimizers.Adam(1e-5)
 
 def ae_loss(x,x_hat):
-    return tf.reduce_mean(tf.math.abs(tf.subtract(x, 
-                                                  x_hat)))
+    return mse(x,x_hat)
 
 def discriminator_loss(real_output, fake_output,loss_weight):
     real_loss =  cross_entropy(tf.ones_like(real_output), real_output)
@@ -104,46 +104,21 @@ def train(ae,discriminator, train_dataset,test_images,test_labels,args):
 
     return ae,discriminator
 
-def main(train_dataset,train_images,train_labels,test_images,test_labels,args):
-    ae = Autoencoder(args)
-    discriminator = Discriminator_x(args)
+def main(train_dataset,train_images, train_labels, test_images, test_labels, test_masks, args):
+
+    if args.data == 'MVTEC':
+        ae = Autoencoder_MVTEC(args)
+        discriminator = Discriminator_x_MVTEC(args)
+    else:
+        ae = Autoencoder(args)
+        discriminator = Discriminator_x(args)
     ae, discriminator = train(ae,
                               discriminator,
                               train_dataset,
                               test_images,
                               test_labels,
                               args)
-
-    save_training_curves([ae,discriminator],
-                         args,
-                         test_images,
-                         test_labels,
-                         'DAE_disc')
-
-    auc_latent, f1_latent, neighbour,radius = nearest_error([ae,discriminator],
-                                                             train_images,
-                                                             test_images,
-                                                             test_labels,
-                                                             'DAE_disc',
-                                                             args,
-                                                             args.data == 'HERA')
-    
-    auc_recon ,f1_recon = get_classifcation('DAE_disc',
-                                             [ae,discriminator],
-                                             test_images,
-                                             test_labels,
-                                             args,
-                                             hera = args.data == 'HERA',
-                                             f1=True,
-                                             args =args)
-    save_metrics('DAE_disc',
-                 args,
-                 auc_recon, 
-                 f1_recon,
-                 neighbour,
-                 radius,
-                 auc_latent,
-                 f1_latent)
+    end_routine(train_images, test_images, test_labels, test_masks, [ae, discriminator], 'DAE_disc', args)
     
 if __name__  == '__main__':
     main()

@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 from sklearn.metrics import roc_curve,auc 
 from utils.metrics import *
-from model_loader import get_error,get_reconstructed 
+from inference import infer, get_error
 import os
 import numpy as np
 import pandas as pd
@@ -89,8 +89,8 @@ def save_training_curves(model,args,test_images,test_labels,name):
         name (str): model name
 
     """
-    error = get_error(name,model,test_images)
-    model_output = get_reconstructed(name,model,test_images)
+    model_output = infer(model[0], test_images, args, 'AE') 
+    error = get_error('AE',test_images, model_output)
     df = pd.DataFrame(columns=['Reconstruction'])
 
     labels = pd.unique(test_labels)

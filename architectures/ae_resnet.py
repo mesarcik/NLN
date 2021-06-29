@@ -3,8 +3,9 @@ import numpy as np
 from sklearn import neighbors
 from matplotlib import pyplot as plt
 import time
-from models import  Autoencoder
-from models_mvtec import Autoencoder as Autoencoder_MVTEC
+from models import (Encoder, 
+                   Decoder, 
+                   Autoencoder)
 
 from utils.plotting  import  (generate_and_save_images,
                              generate_and_save_training)
@@ -21,6 +22,10 @@ def l2_loss(x,x_hat):
 
     return mse(x,x_hat)
 
+
+def perceptual_loss(x,x_hat):
+    return mse(resnet(x),resnet(x_hat))
+
 @tf.function
 def train_step(model, x):
     """Executes one training step and returns the loss.
@@ -30,7 +35,7 @@ def train_step(model, x):
     """
     with tf.GradientTape() as tape:
         x_hat = model(x)
-        loss = l2_loss(x,x_hat)
+        loss = perceptual_loss(x,x_hat)
     gradients = tape.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
     return loss
@@ -40,35 +45,51 @@ def train(ae,train_dataset,train_images, test_images,test_labels,args,verbose=Tr
     for epoch in range(args.epochs):
         start = time.time()
 
+        #_z = infer(ae.encoder, train_images, args, 'encoder')
+        #_x = infer(ae , train_images, args, 'RESNET_AE')
+        #nbrs = neighbors.NearestNeighbors(n_neighbors= NNEIGHBOURS, algorithm='ball_tree', n_jobs=-1).fit(_z) 
+
+        #neighbours_dist, neighbours_idx  =  nbrs.kneighbors(_z, return_distance=True)
+        #neighbours = _x[neighbours_idx]
+
+        ############ DELETE 
+        #fig,axs = plt.subplots(5,NNEIGHBOURS +2,figsize=(5,5))
+        #for i in range(5):
+        #    r = np.random.randint(train_images.shape[0])
+        #    axs[i,0].imshow(train_images[r,...])
+        #    axs[i,1].imshow(_x[r,...])
+        #    for j in range(2,NNEIGHBOURS+2):
+        #        axs[i,j].imshow(neighbours[r,j-2,...])
+        #        axs[i,j].set_title('N{} - {}'.format(j-1, round(neighbours_dist[r,j-2]),3),fontsize=5)
+        #        axs[i,j].axis('off')
+        #plt.savefig('/tmp/neighbours/n_{}_{}'.format(args.anomaly_class,epoch))
+        #plt.close('all')
+        ###################
         for image_batch in train_dataset:
             auto_loss  =  train_step(ae,image_batch)
 
         generate_and_save_images(ae,
                                  epoch + 1,
                                  image_batch[:25,...],
-                                 'AE',
+                                 'RESNET_AE',
                                  args)
-        save_checkpoint(ae,epoch, args,'AE','ae')
+        save_checkpoint(ae,epoch, args,'RESNET_AE','ae')
 
         ae_loss.append(auto_loss)
 
-        print_epoch('AE',epoch,time.time()-start,{'AE Loss':auto_loss.numpy()},None)
+        print_epoch('RESNET_AE',epoch,time.time()-start,{'RESNET_AE Loss':auto_loss.numpy()},None)
 
     generate_and_save_training([ae_loss],
                                 ['ae loss'],
-                                'AE',args)
-    generate_and_save_images(ae,epoch,image_batch[:25,...],'AE',args)
+                                'RESNET_AE',args)
+    generate_and_save_images(ae,epoch,image_batch[:25,...],'RESNET_AE',args)
 
     return ae
 
 def main(train_dataset,train_images,train_labels,test_images,test_labels, test_masks,args):
-    if args.data == 'MVTEC':
-        ae = Autoencoder_MVTEC(args)
-    else:
-        ae = Autoencoder(args)
-
+    ae = Autoencoder(args)
     ae = train(ae,train_dataset, train_images,test_images,test_labels,args)
-    end_routine(train_images, test_images, test_labels, test_masks, [ae], 'AE', args)
+    end_routine(train_images, test_images, test_labels, test_masks, [ae], 'RESNET_AE', args)
 
     
 if __name__  == '__main__':

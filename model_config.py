@@ -2,8 +2,10 @@
 import tensorflow as tf
 
 BUFFER_SIZE =25000 # 60000
-BATCH_SIZE = 2048#1024 #256 
+BATCH_SIZE = 2**7
 cross_entropy = tf.keras.losses.BinaryCrossentropy()
+mse = tf.keras.losses.MeanSquaredError()
 
-n_layers = 3
-n_filters = 32
+### AE Parameters for CIFAR, MNIST, FMNIST 
+n_filters =32 
+n_layers =3
