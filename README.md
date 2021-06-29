@@ -64,7 +64,7 @@ Run the following:
 ## Reporting Results 
 Run the following given the correctly generated results files:
 ```
-    python report.py -data <MNIST,CIFAR10,FASHION_MNIST,MVTEC>
+    python report.py -data <MNIST,CIFAR10,FASHION_MNIST,MVTEC> -seed <filepath-seed>
 ```
 
 ## Licensing
