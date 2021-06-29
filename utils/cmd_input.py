@@ -57,20 +57,19 @@ args = parser.parse_args()
 args.model_name = new_name()
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = args.debug
 
-dim = sizes[args.anomaly_class]
 if args.data == 'MNIST' or args.data == 'FASHION_MNIST':
-    args.input_shape =(dim,dim,1)
+    args.input_shape =(28,28,1)
 
 elif args.data == 'CIFAR10':
-    args.input_shape =(dim,dim,3)
+    args.input_shape =(32,32,3)
 
 elif args.data == 'MVTEC':
     if (('grid' in args.anomaly_class) or
         ('screw' in args.anomaly_class) or 
         ('zipper' in args.anomaly_class)): 
-        args.input_shape =(dim,dim,1)
+        args.input_shape =(1024,1024,1)
     else:
-        args.input_shape =(dim,dim,3)
+        args.input_shape =(1024,1024,3)
 
 if args.patches:
     args.input_shape = (args.patch_x,args.patch_y,args.input_shape[-1])

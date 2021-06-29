@@ -20,8 +20,8 @@ def load_mnist(args):
         args (Namespace) Command line parameters from utils.cmd_input
     """
     (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.mnist.load_data()
-    train_images = resize(np.expand_dims(train_images,axis=-1), (32, 32 ,1))
-    test_images =  resize(np.expand_dims(test_images,axis=-1), (32, 32 ,1))
+    train_images = np.expand_dims(train_images,axis=-1)
+    test_images = np.expand_dims(test_images,axis=-1)
 
     if str(args.anomaly_class) is not None:
         if args.anomaly_type == 'MISO':
@@ -57,9 +57,6 @@ def load_mnist(args):
                                             (1,args.patch_x, args.patch_y, 1),
                                             (1,args.patch_stride_x, args.patch_stride_y, 1))
 
-
-    # TODO
-    # I need to note that this way of processing might be weird,
     train_images = process(train_images)
     test_images = process(test_images)
 
@@ -74,8 +71,8 @@ def load_fashion_mnist(args):
         args (Namespace) Command line parameters from utils.cmd_input
     """
     (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.fashion_mnist.load_data()
-    train_images = resize(np.expand_dims(train_images,axis=-1), (32, 32 ,1))
-    test_images =  resize(np.expand_dims(test_images,axis=-1), (32, 32 ,1))
+    train_images = np.expand_dims(train_images,axis=-1)
+    test_images =  np.expand_dims(test_images,axis=-1)
 
     if str(args.anomaly_class) is not None:
         if args.anomaly_type == 'MISO':
@@ -111,10 +108,6 @@ def load_fashion_mnist(args):
 
         train_images, train_labels, test_images, test_labels = data
 
-    # TODO
-    # I need to note that this way of processing might be weird,
-    train_images = process(train_images)
-    test_images = process(test_images)
     train_images = process(train_images)
     test_images = process(test_images)
 
@@ -164,7 +157,7 @@ def load_cifar10(args):
 
         train_images, train_labels, test_images, test_labels = data
         train_images = process(train_images, per_image=False)
-        test_images = process(test_images, per_image=False) # normalisation after patches results in misdirection.
+        test_images = process(test_images, per_image=False) 
 
     else: 
         train_images = process(train_images)
@@ -177,9 +170,7 @@ def load_mvtec(args):
     """
         Loads the MVTEC-AD dataset
 
-        SIMO_class (str) is the SIMO class
-        args.limit (int) sets a args.limit on the number of test and training samples
-        args.percentage_anomaly (float) adds a percentage of the anomalous/novel class to the training set
+        args (Namespace) Command line parameters from utils.cmd_input
     """
     (train_images, train_labels), (test_images, test_labels, test_masks) = get_mvtec_images(str(args.anomaly_class))
 
@@ -230,7 +221,7 @@ def load_mvtec(args):
     
 
     train_images = process(train_images, per_image=False)
-    test_images =  process(test_images, per_image=False) # normalisation after patches results in misdirection.
+    test_images =  process(test_images, per_image=False) 
 
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
 

@@ -11,7 +11,7 @@ from utils.plotting  import  (generate_and_save_images,
                              save_training_curves)
 
 from utils.training import print_epoch,save_checkpoint
-from model_config import BUFFER_SIZE,BATCH_SIZE,cross_entropy
+from model_config import *
 
 from .helper import end_routine
 
@@ -20,8 +20,7 @@ discriminator_optimizer = tf.keras.optimizers.Adam(1e-5)
 generator_optimizer = tf.keras.optimizers.Adam(1e-5)
 
 def l2_loss(x,x_hat,loss_weight):
-    return loss_weight*tf.reduce_mean(tf.math.abs(tf.subtract(x, 
-                                                              x_hat)))
+    return loss_weight*mse(x,x_hat)
 
 def discriminator_loss(real_output, fake_output,loss_weight):
     real_loss =  cross_entropy(tf.ones_like(real_output), real_output)

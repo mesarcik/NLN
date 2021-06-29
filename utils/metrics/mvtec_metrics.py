@@ -65,7 +65,7 @@ def accuracy_metrics(model,
     cl_auc , normal_accuracy, anomalous_accuracy = get_acc(args.anomaly_class, labels_recon, error_agg)
     
     seg_auc, seg_prc = get_segmentation(error_recon, masks_recon, labels_recon, args)
-    seg_iou= iou_score(error_recon, masks_recon)
+    seg_iou= -1#iou_score(error_recon, masks_recon)
 
 
     seg_auc_nlns, seg_prc_nlns, dist_aucs, seg_aucs_dist, seg_iou_nlns = [], [], [], [],[]
@@ -98,7 +98,7 @@ def accuracy_metrics(model,
 
         error_agg =  np.mean(nln_error_recon ,axis=tuple(range(1,nln_error_recon.ndim)))
         cl_auc_nln , normal_accuracy_nln, anomalous_accuracy_nln = get_acc(args.anomaly_class,labels_recon, error_agg)
-        iou_nln = iou_score(nln_error_recon, masks_recon)
+        iou_nln = -1#iou_score(nln_error_recon, masks_recon)
         seg_iou_nlns.append(iou_nln)
 
         seg_auc_nln,seg_prc_nln = get_segmentation(nln_error_recon, masks_recon, labels_recon, args)

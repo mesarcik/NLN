@@ -14,13 +14,12 @@ from model_config import *
 from .helper import end_routine
 from inference import infer
 
-optimizer = tf.keras.optimizers.Adam(2e-4)
+optimizer = tf.keras.optimizers.Adam()
 NNEIGHBOURS= 5
 
 def l2_loss(x,x_hat):
 
     return mse(x,x_hat)
-
 
 @tf.function
 def train_step(model, x):
@@ -41,26 +40,6 @@ def train(ae,train_dataset,train_images, test_images,test_labels,args,verbose=Tr
     for epoch in range(args.epochs):
         start = time.time()
 
-        #_z = infer(ae.encoder, train_images, args, 'encoder')
-        #_x = infer(ae , train_images, args, 'AE')
-        #nbrs = neighbors.NearestNeighbors(n_neighbors= NNEIGHBOURS, algorithm='ball_tree', n_jobs=-1).fit(_z) 
-
-        #neighbours_dist, neighbours_idx  =  nbrs.kneighbors(_z, return_distance=True)
-        #neighbours = _x[neighbours_idx]
-
-        ############ DELETE 
-        #fig,axs = plt.subplots(5,NNEIGHBOURS +2,figsize=(5,5))
-        #for i in range(5):
-        #    r = np.random.randint(train_images.shape[0])
-        #    axs[i,0].imshow(train_images[r,...])
-        #    axs[i,1].imshow(_x[r,...])
-        #    for j in range(2,NNEIGHBOURS+2):
-        #        axs[i,j].imshow(neighbours[r,j-2,...])
-        #        axs[i,j].set_title('N{} - {}'.format(j-1, round(neighbours_dist[r,j-2]),3),fontsize=5)
-        #        axs[i,j].axis('off')
-        #plt.savefig('/tmp/neighbours/n_{}_{}'.format(args.anomaly_class,epoch))
-        #plt.close('all')
-        ###################
         for image_batch in train_dataset:
             auto_loss  =  train_step(ae,image_batch)
 

@@ -7,15 +7,15 @@ from utils.plotting  import  (generate_and_save_images,
                              generate_and_save_training,
                              save_training_curves)
 from utils.training import print_epoch,save_checkpoint
-from model_config import BUFFER_SIZE,BATCH_SIZE,cross_entropy
+from model_config import  *
 
 from .helper import end_routine
 
-optimizer = tf.keras.optimizers.Adam()#1e-4)
+optimizer = tf.keras.optimizers.Adam()
 
 def l2_loss(x,x_hat):
-    return tf.reduce_sum(tf.math.abs(tf.subtract(tf.keras.backend.flatten(x),
-                                  tf.keras.backend.flatten(x_hat))))
+    return mse(tf.keras.backend.flatten(x),
+                                  tf.keras.backend.flatten(x_hat))
 
 def KL_loss(logvar, mean):
     kl_loss = 1 + logvar - tf.square(mean) - tf.exp(logvar)

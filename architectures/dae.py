@@ -15,12 +15,12 @@ from model_config import *
 
 from .helper import end_routine
 
-ae_optimizer = tf.keras.optimizers.Adam()#1e-5)
+ae_optimizer = tf.keras.optimizers.Adam()
 discriminator_optimizer = tf.keras.optimizers.Adam(1e-5)
 generator_optimizer = tf.keras.optimizers.Adam(1e-5)
 
 def ae_loss(x,x_hat):
-    return tf.reduce_mean(mse(x,x_hat))
+    return mse(x,x_hat)
 
 def discriminator_loss(real_output, fake_output,loss_weight):
     real_loss =  cross_entropy(tf.ones_like(real_output), real_output)
@@ -77,18 +77,18 @@ def train(ae,discriminator, train_dataset,test_images,test_labels,args):
         generate_and_save_images(ae,
                                  epoch + 1,
                                  image_batch[:25,...],
-                                 'DAE',
+                                 'DAE_disc',
                                  args)
 
-        save_checkpoint(ae,epoch,args,'DAE','ae')
-        save_checkpoint(discriminator, epoch, args,'DAE','disc')
+        save_checkpoint(ae,epoch,args,'DAE_disc','ae')
+        save_checkpoint(discriminator, epoch, args,'DAE_disc','disc')
 
         ae_loss.append(auto_loss)
         d_loss.append(disc_loss)
         g_loss.append(gen_loss)
 
 
-        print_epoch('DAE',
+        print_epoch('DAE_disc',
                      epoch,
                      time.time()-start,
                      {'AE Loss':auto_loss.numpy(),
@@ -98,9 +98,9 @@ def train(ae,discriminator, train_dataset,test_images,test_labels,args):
 
     generate_and_save_training([ae_loss,d_loss,g_loss],
                                 ['ae loss','disc loss','gen loss'],
-                                'DAE',args)
+                                'DAE_disc',args)
 
-    generate_and_save_images(ae,epoch,image_batch[:25,...],'DAE',args)
+    generate_and_save_images(ae,epoch,image_batch[:25,...],'DAE_disc',args)
 
     return ae,discriminator
 
@@ -118,7 +118,7 @@ def main(train_dataset,train_images, train_labels, test_images, test_labels, tes
                               test_images,
                               test_labels,
                               args)
-    end_routine(train_images, test_images, test_labels, test_masks, [ae, discriminator], 'DAE', args)
+    end_routine(train_images, test_images, test_labels, test_masks, [ae, discriminator], 'DAE_disc', args)
     
 if __name__  == '__main__':
     main()

@@ -37,23 +37,23 @@ def generate_tables(args,verbose=False):
 
         dataset (str) name of dataset  
     """
-    TYPE= args.anomaly_type #'SIMO'
-    ERROR = ['Distance_AUC','AUC_NLN_Error','Sum_Recon_NLN_Dist', 'Mul_Recon_NLN_Dist'][0]
+    TYPE= args.anomaly_type 
+    ERROR = ['Distance_AUC','AUC_NLN_Error','Sum_Recon_NLN_Dist', 'Mul_Recon_NLN_Dist'][3]
 
     df = add_df_parameters(args)
     df = df[df.Type==TYPE]
 
     df_agg_recon = df.groupby(['Model',
                               'Class',
-                              'Latent_Dim']).agg({'AUC_Reconstruction_Error': 'max'}).reset_index()
+                              'Latent_Dim']).agg({'AUC_Reconstruction_Error': 'mean'}).reset_index()
 
     df_agg_nln = df.groupby(['Model',
                             'Class',
                             'Latent_Dim',
-                            'Neighbour']).agg({ERROR: 'max'}).reset_index()
+                            'Neighbour']).agg({ERROR: 'mean'}).reset_index()
     improvement = [] 
-    performance, model_type, nneighbours, score  = {}, '', -1, 0
-    for model in ['AE','AAE', 'VAE', 'DAE', 'GANomaly']:
+    performance, model_type, nneighbours, score,dim  = {}, '', -1, 0,0
+    for model in ['AE','AAE', 'VAE', 'DAE_disc', 'GANomaly']: 
         recon,latent = [],[]
         for cl in np.sort(pd.unique(df.Class)):
 
@@ -79,12 +79,13 @@ def generate_tables(args,verbose=False):
             recon.append(df_max['AUC_Reconstruction_Error'].values[0])
 
         improvement.append(round(100*(1-np.mean(recon)/np.mean(latent)),2))
-        performance[model] = [neigh, np.mean(latent)]
+        performance[model] = [neigh, np.mean(latent),ld]
 
         if np.mean(latent) > score: 
             score = np.mean(latent)
             model_type = model
             nneighbours = neigh
+            dim = ld
 
         if verbose:
             print('Model {} \nMean Reconstruction error {}+-{}\nMean Latent Error {}+-{}\nPercetange Increase {}\n'.format(model,
@@ -94,8 +95,8 @@ def generate_tables(args,verbose=False):
                                                                                                                             round(np.var(latent),2), 
                                                                                                                             round(1-np.mean(recon)/np.mean(latent),4)))
     #print('\t & {}\%\t & {}\%\t & {}\%\t & {}\%\t & {}\% \\'.format('AE','AAE', 'VAE', 'DAE', 'GANomaly'))
-    print('Dataset: {} \t Model ={} \t #Neigbours={} \t nAUCROC={}'.format(args.dataset, model_type, nneighbours, round(score,3)))
+    print('Dataset: {} \t Model ={} \t #Neigbours={} \t Latent Dim={}  \t nAUCROC={}'.format(args.dataset, model_type, nneighbours, dim, round(score,3)))
 
     if args.dataset == 'FASHION_MNIST': d = 'FMNIST'
     else: d = args.dataset
-    print('{}\t & {}\%\t & {}\%\t & {}\%\t & {}\%\t & {}\% \\'.format(d,*improvement))
+    print('{}\t & {}\%\t & {}\%\t & {}\%\t & {}\%\t & {}\%\t\\'.format(d,*improvement)) # & {}\%\t & {}\%\t & {}\%\t & {}\%

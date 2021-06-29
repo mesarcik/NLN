@@ -256,11 +256,11 @@ def get_nln_metrics(model,
 
             if args.anomaly_type == 'MISO':
                 add = metrics.roc_auc_score(test_labels_==args.anomaly_class, error+dists+recon_error)
-                mul = metrics.roc_auc_score(test_labels_==args.anomaly_class, error+dists )
+                mul = metrics.roc_auc_score(test_labels_==args.anomaly_class, 0.3*error+0.7*dists )
                 dists = metrics.roc_auc_score(test_labels_==args.anomaly_class, dists)
             else:
                 add = metrics.roc_auc_score(test_labels_!=args.anomaly_class, error+dists+recon_error)
-                mul = metrics.roc_auc_score(test_labels_!=args.anomaly_class, error+dists)
+                mul = metrics.roc_auc_score(test_labels_!=args.anomaly_class, 0.3*error+0.7*dists)
                 dists = metrics.roc_auc_score(test_labels_!=args.anomaly_class, dists)
 
 
