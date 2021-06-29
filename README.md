@@ -28,8 +28,16 @@ Run the following to replicate the results for MNIST, CIFAR-10 and Fashion-MNIST
     sh experiments/run_mnist.sh
     sh experiments/run_cifar.sh
     sh experiments/run_fmnist.sh
+    sh experiments/run_mvtec.sh
 ```
 
+Or to execute all experiments sequentially the following script can be run:
+```
+    sh experiments/run_all.sh
+```
+
+### MVTec-AD usage 
+You will need to download the [MVTec anomaly detection dataset](https://www.mvtec.com/company/research/datasets/mvtec-ad) and specify the its path using `-mvtec_path` command line option.
 
 ## Training 
 Run the following: 
@@ -39,15 +47,24 @@ Run the following:
                    -limit <int> \
                    -epochs <int> \
                    -latent_dim <int> \
-                   -data <MNIST,FASHION_MNIST,CIFAR10> \
+                   -data <MNIST,FASHION_MNIST,CIFAR10,MVTEC> \
+                   -mvtec_path <str>\
                    -neighbors <int(s)> \
-                   -radius <float(s)> \
-                   -algorithm <knn,radius>    
+                   -algorithm <knn> \
+				   -patches <True, False> \
+				   -crop <True, False> \
+				   -rotate <True, False> \
+				   -patch_x <int> \    
+				   -patch_y <int> \    
+				   -patch_x_stride <int> \    
+				   -patch_y_stride <int> \    
+				   -crop_x <int> \    
+				   -crop_y <int> \    
 ```
 ## Reporting Results 
 Run the following given the correctly generated results files:
 ```
-    python report.py -data <MNIST,CIFAR10,FASHION_MNIST>
+    python report.py -data <MNIST,CIFAR10,FASHION_MNIST, MVTEC>
 ```
 
 ## Licensing
