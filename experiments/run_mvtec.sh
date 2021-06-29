@@ -1,5 +1,5 @@
 #!/bin/sh
-echo "Logging for run_mvtecr.sh at time: $(date)." >> log.log
+echo "Logging for run_mvtec.sh at time: $(date)." >> log.log
 
 limit=None
 epochs=100
@@ -7,6 +7,7 @@ percentage=0.0
 seed=$(openssl rand -hex 3)
 d=$(date +'%m-%d-%Y-%I-%M_')
 ld=128
+atype=SIMO
 
 for patch in 128 
 	do
@@ -18,6 +19,7 @@ for patch in 128
 							      -epochs $epochs \
 							      -latent_dim $ld\
 							      -data MVTEC\
+							      -mvtec_path datasets/MVTecAD/\
 							      -neighbors 1 2 3 5 \
 							      -algorithm knn\
 								  -rotate True \
@@ -32,3 +34,4 @@ for patch in 128
 							      -seed $d$seed | tee -a mvtec.log
 		done
 done
+python report.py -data MVTEC -seed $seed -anomaly_type $atype

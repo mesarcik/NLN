@@ -5,7 +5,7 @@ from tqdm import tqdm
 from imageio import imread
 from glob import glob
 
-def get_mvtec_images(SIMO_class, directory='datasets/MVTecAD/'):
+def get_mvtec_images(SIMO_class, directory):
     """"
         Walks through MVTEC dataset and returns data in the same structure as tf
         

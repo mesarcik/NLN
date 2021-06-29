@@ -19,19 +19,7 @@ def infer(model, data, args, arch):
         np.array
 
     """
-    if arch == 'NNAE':
-        xhat_tensor = tf.data.Dataset.from_tensor_slices(data[0]).batch(BATCH_SIZE)
-        nln_tensor = tf.data.Dataset.from_tensor_slices(data[1]).batch(BATCH_SIZE)
-
-        output = np.empty([len(data[0]), args.latent_dim])
-        strt, fnnsh = 0, BATCH_SIZE
-        for xhat_batch, nln_batch in zip(xhat_tensor, nln_tensor):
-            output[strt:fnnsh,...] = model(xhat_batch, [nln_batch[:,i,...] for i in range(nln_batch.shape[1])]).numpy()
-            strt = fnnsh
-            fnnsh +=BATCH_SIZE
-        return output
-    else:
-        data_tensor = tf.data.Dataset.from_tensor_slices(data).batch(BATCH_SIZE)
+    data_tensor = tf.data.Dataset.from_tensor_slices(data).batch(BATCH_SIZE)
 
     if arch =='AE' or arch == 'encoder':
         if arch=='encoder':
@@ -86,38 +74,18 @@ def get_error(model_type,
     """
 
     if ((model_type == 'AE') or 
-        (model_type == 'AAE') or
-        (model_type == 'AE_SSIM') or
-        (model_type == 'DAE') or
-        (model_type == 'VAE')):
-
+            (model_type == 'AAE') or
+            (model_type == 'AE_SSIM') or
+            (model_type == 'DAE') or
+            (model_type == 'VAE')):
         error = x - x_hat 
 
-    elif (model_type == 'RESNET_AE'):
-
-        error = resnet(x).numpy() - resnet(x_hat).numpy()
-
-
-
     elif model_type == 'DAE_disc':
-        #reconstruction_error = x - x_hat
-        #if abs: reconstruction_error = abs(reconstruction_error)
-        #reconstruction_error = reconstruction_error.mean(
-        #                                                 axis=tuple(
-        #                                                 range(1,reconstruction_error.ndim)))
-
         discriminator_error  = d_x - d_x_hat
         if abs: discriminator_error = abs(discriminator_error)
-        #discriminator_error = discriminator_error.mean(
-        #                                                 axis=tuple(
-        #                                                 range(1,discriminator_error.ndim)))
-        #alpha = 0.9
-        #error = (1-alpha)*reconstruction_error + alpha*discriminator_error
         error = discriminator_error
 
-    elif ((model_type == 'GANomaly') or 
-         (model_type == 'NNAE')):
-
+    elif model_type == 'GANomaly':
         error = z- z_hat
 
     if ab:

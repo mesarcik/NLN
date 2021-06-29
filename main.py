@@ -44,7 +44,5 @@ def main():
     train_vae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
     train_aae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
 
-
-
 if __name__ == '__main__':
     main()

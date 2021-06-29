@@ -27,21 +27,22 @@ parser.add_argument('-algorithm', metavar='-nn', type=str, choices={"frnn", "knn
                     default='frnn', help = 'The algorithm for calculating neighbours')
 parser.add_argument('-data', metavar='-d', type=str, default='MNIST',
                     help = 'The dataset for training and testing the model on')
+
+parser.add_argument('-mvtec_path', metavar='-mp', type=str, default='datasets/MVTecAD/',
+                    help = 'Path to MVTecAD training data')
+
 parser.add_argument('-seed', metavar='-s', type=str, 
                     help = 'The random seed used for naming output files')
 parser.add_argument('-debug', metavar='-de', type=str, default='0', 
                     choices={'0', '1', '2', '3'}, help = 'TF debug level')
-
 parser.add_argument('-rotate', metavar='-rot', type=bool,default=False, 
                     help = 'Train on rotated augmentations?')
-
 parser.add_argument('-crop', metavar='-cr', type=bool,default=False, 
                     help = 'Train on crops?')
 parser.add_argument('-crop_x', metavar='-cx', type=int,
                     help = 'x-dimension of crop')
 parser.add_argument('-crop_y', metavar='-cy', type=int,
                     help = 'y-dimension of crop')
-
 parser.add_argument('-patches', metavar='-ptch', type=bool,default=False, 
                     help = 'Train on patches?')
 parser.add_argument('-patch_x', metavar='-px', type=int, default=-1,

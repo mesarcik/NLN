@@ -7,11 +7,13 @@ percentage=0.0
 seed=$(openssl rand -hex 3)
 d=$(date +'%m-%d-%Y-%I-%M_')
 ld=32
+atype=MISO
 
 for i in $(seq 0 9)
 do
 		python -u main.py -limit $limit \
 						  -anomaly_class $i \
+						  -anomaly_type $atype\
 						  -percentage_anomaly $percentage \
 						  -epochs $epochs \
 						  -latent_dim $ld \
@@ -21,3 +23,4 @@ do
 						  -seed $d$seed | tee -a cifar.log 
 done
 
+python report.py -data CIFAR10 -seed $seed -anomaly_type $atype
