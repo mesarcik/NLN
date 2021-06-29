@@ -172,7 +172,7 @@ def load_mvtec(args):
 
         args (Namespace) Command line parameters from utils.cmd_input
     """
-    (train_images, train_labels), (test_images, test_labels, test_masks) = get_mvtec_images(str(args.anomaly_class))
+    (train_images, train_labels), (test_images, test_labels, test_masks) = get_mvtec_images(str(args.anomaly_class), args.mvtec_path)
 
     
     if args.limit is not None:
