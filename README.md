@@ -23,7 +23,7 @@ Additionally for training on a GPU run:
 
 
 ## Replication of results in paper 
-Run the following to replicate the results for MNIST, CIFAR-10 and Fashion-MNIST respectively
+Run the following to replicate the results for MNIST, CIFAR-10, Fashion-MNIST, MVTec-AD respectively
 ```
     sh experiments/run_mnist.sh
     sh experiments/run_cifar.sh
@@ -51,20 +51,20 @@ Run the following:
                    -mvtec_path <str>\
                    -neighbors <int(s)> \
                    -algorithm <knn> \
-				   -patches <True, False> \
-				   -crop <True, False> \
-				   -rotate <True, False> \
-				   -patch_x <int> \    
-				   -patch_y <int> \    
-				   -patch_x_stride <int> \    
-				   -patch_y_stride <int> \    
-				   -crop_x <int> \    
-				   -crop_y <int> \    
+		   -patches <True, False> \
+		   -crop <True, False> \
+		   -rotate <True, False> \
+		   -patch_x <int> \    
+		   -patch_y <int> \    
+		   -patch_x_stride <int> \    
+		   -patch_y_stride <int> \    
+		   -crop_x <int> \    
+		   -crop_y <int> \    
 ```
 ## Reporting Results 
 Run the following given the correctly generated results files:
 ```
-    python report.py -data <MNIST,CIFAR10,FASHION_MNIST, MVTEC>
+    python report.py -data <MNIST,CIFAR10,FASHION_MNIST,MVTEC>
 ```
 
 ## Licensing
