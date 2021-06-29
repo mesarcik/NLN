@@ -23,7 +23,7 @@ Additionally for training on a GPU run:
 
 
 ## Replication of results in paper 
-Run the following to replicate the results for MNIST, CIFAR-10, Fashion-MNIST, MVTec-AD respectively
+Run the following to replicate the results for MNIST, CIFAR-10, Fashion-MNIST and MVTec-AD respectively
 ```
     sh experiments/run_mnist.sh
     sh experiments/run_cifar.sh
