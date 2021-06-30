@@ -16,6 +16,7 @@ def plot_neighs(test_images, test_labels, test_masks, x_hat, neighbours, neighbo
             test_images = test_images[...,0] 
             x_hat = x_hat[...,0] 
             neighbours= neighbours[...,0] 
+            error = error[...,0] 
     else:
         test_images = test_images[...,0] 
         x_hat = x_hat[...,0] 

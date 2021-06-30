@@ -16,8 +16,8 @@ def get_mvtec_images(SIMO_class, directory):
     train_images, test_images, train_labels ,test_labels, test_masks  = [], [], [], [], []
     
     # if the training dataset has already been created then return that
-    if os.path.exists('{}{}.pickle'.format(directory,SIMO_class)):
-        print('{}{}.pickle loading'.format(directory, SIMO_class))
+    if os.path.exists(os.path.join(directory,'{}.pickle'.format(SIMO_class))):
+        print(os.path.join(directory,'{}.pickle'.format(SIMO_class)) + ' Loading')
         with open('{}/{}.pickle'.format(directory,SIMO_class),'rb') as f:
             return pickle.load(f)
 

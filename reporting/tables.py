@@ -8,15 +8,14 @@ def add_df_parameters(args):
     """
         Adds the missing parameters to the results.csv file 
 
-        dataset (str)  name of the preexisting dataset
     """
-    df = pd.read_csv('../outputs/results_{}_{}.csv'.format(args.dataset, args.seed))
+    df = pd.read_csv('outputs/results_{}_{}.csv'.format(args.data, args.seed))
     df.drop(columns =list(df.columns[-7:]),inplace =True) 
     index = 0
     data = []
     for i in range(df.shape[0]):
         d = df.iloc[i]
-        scores = np.load('../outputs/{}/{}/{}/latent_scores.pkl'.format(d.Model,
+        scores = np.load('outputs/{}/{}/{}/latent_scores.pkl'.format(d.Model,
                                                                       d.Class,
                                                                       d.Name),
                                                                       allow_pickle=True)
@@ -35,7 +34,6 @@ def generate_tables(args,verbose=False):
     """
         Creates a single barplot for a given dataset 
 
-        dataset (str) name of dataset  
     """
     TYPE= args.anomaly_type 
     ERROR = ['Distance_AUC','AUC_NLN_Error','Sum_Recon_NLN_Dist', 'Mul_Recon_NLN_Dist'][3]
@@ -95,8 +93,8 @@ def generate_tables(args,verbose=False):
                                                                                                                             round(np.var(latent),2), 
                                                                                                                             round(1-np.mean(recon)/np.mean(latent),4)))
     #print('\t & {}\%\t & {}\%\t & {}\%\t & {}\%\t & {}\% \\'.format('AE','AAE', 'VAE', 'DAE', 'GANomaly'))
-    print('Dataset: {} \t Model ={} \t #Neigbours={} \t Latent Dim={}  \t nAUCROC={}'.format(args.dataset, model_type, nneighbours, dim, round(score,3)))
+    print('Dataset: {} \t Model ={} \t #Neigbours={} \t Latent Dim={}  \t nAUCROC={}'.format(args.data, model_type, nneighbours, dim, round(score,3)))
 
-    if args.dataset == 'FASHION_MNIST': d = 'FMNIST'
-    else: d = args.dataset
+    if args.data== 'FASHION_MNIST': d = 'FMNIST'
+    else: d = args.data
     print('{}\t & {}\%\t & {}\%\t & {}\%\t & {}\%\t & {}\%\t\\'.format(d,*improvement)) # & {}\%\t & {}\%\t & {}\%\t & {}\%

@@ -68,7 +68,7 @@ def main(cmd_args):
     for model_type in models:
         results = {}
                 
-            for i,clss in enumerate(list(df.Class)):
+        for i,clss in enumerate(list(df.Class)):
             if (('grid' in clss) or
                 ('screw' in clss) or 
                 ('zipper' in clss)): 
