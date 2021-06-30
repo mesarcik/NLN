@@ -4,13 +4,12 @@ import os
 import pandas as pd
 import pickle
 from matplotlib import pyplot as plt
-
+import sys
 sys.argv = [''] 
 
 from inference import infer, get_error
 from utils.data import reconstruct,process
 from utils.metrics import *
-from utils.metrics.mvtec_metrics import get_dists
 from models import Autoencoder  
 from models_mvtec import Autoencoder as Autoencoder_MVTEC 
 

@@ -11,7 +11,6 @@ sys.argv = ['']
 from inference import infer, get_error
 from utils.data import reconstruct,process
 from utils.metrics import *
-from utils.metrics.mvtec_metrics import get_dists
 from models_mvtec import Encoder as Encoder_MVTEC
 from models_mvtec import Autoencoder as Autoencoder_MVTEC 
 from models_mvtec import Discriminator_x as Discriminator_x_MVTEC
