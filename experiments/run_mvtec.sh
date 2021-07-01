@@ -22,16 +22,21 @@ for patch in 128
 							      -mvtec_path datasets/MVTecAD/\
 							      -neighbors 1 2 3 5 \
 							      -algorithm knn\
-								  -rotate True \
-								  -crop True \
-								  -patches True \
-								  -crop_x $patch\
-								  -crop_y $patch\
-								  -patch_x $patch \
-								  -patch_y $patch \
-								  -patch_stride_x $patch \
-								  -patch_stride_y $patch \
+							      -rotate True \
+							      -crop True \
+							      -patches True \
+							      -crop_x $patch\
+							      -crop_y $patch\
+							      -patch_x $patch \
+							      -patch_y $patch \
+							      -patch_stride_x $patch \
+							      -patch_stride_y $patch \
 							      -seed $d$seed | tee -a mvtec.log
 		done
 done
-python report.py -data MVTEC -seed $seed -anomaly_type $atype
+
+python report.py -data MVTEC\ 
+                 -seed $seed\
+		 -anomaly_type $atype\
+		 -mvtec_path datasets/MVTecAD/\
+		 -anomaly_class nan\
