@@ -10,9 +10,9 @@ def report():
         Checks if the results files have been correctly generated 
             and produces desired plots
     '''
-    if ((args.data == 'CIFAR10') or 
-        (args.data == 'MNIST') or
-        (args.data == 'FASHION_MNIST')):
+    if ((cmd_input.args.data == 'CIFAR10') or 
+        (cmd_input.args.data == 'MNIST') or
+        (cmd_input.args.data == 'FASHION_MNIST')):
 
         if os.path.exists('outputs/results_{}_{}.csv'.format(cmd_input.args.data,
                                                              cmd_input.args.seed)):
@@ -21,7 +21,7 @@ def report():
             raise Exception('Need {} results to call \
                              generate_tables()'.format(cmd_input.args.data))
 
-    elif args.data == 'MVTEC':
+    elif cmd_input.args.data == 'MVTEC':
         if os.path.exists('outputs/results_{}_{}.csv'.format(cmd_input.args.data,
                                                              cmd_input.args.seed)):
             mvtec_eval(cmd_input.args)
