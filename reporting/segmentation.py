@@ -27,6 +27,8 @@ class Namespace:
         self.model_name= clss
     def set_input_shape(self,input_shape):
         self.input_shape= input_shape 
+    def set_mvtec_path(self,path):
+        self.mvtec_path = path
 
 PATCH = 128 
 LD = 128
@@ -60,7 +62,7 @@ def main(cmd_args):
     df = pd.read_csv('outputs/results_{}_{}.csv'.format(cmd_args.data, cmd_args.seed)) 
     dataset = 'MVTEC'
     df = df[df.Model == 'AE']
-    for cls in list(df.Class):
+    for cls in list(pd.unique(df.Class)):
         if (('grid' in cls) or
             ('screw' in cls) or 
             ('zipper' in cls)): 
@@ -68,12 +70,14 @@ def main(cmd_args):
         else:
             args.set_input_shape((PATCH,PATCH,3))
 
+        model_name = df[df.Class == cls].Name.item()
         args.set_class(cls)
+        args.set_mvtec_path(cmd_args.mvtec_path)
         (train_dataset, train_images, train_labels, test_images, test_labels,test_masks) = load_mvtec(args)
 
         ae = Autoencoder_MVTEC(args)        
 
-        ae.load_weights('/home/mmesarcik/NLN/outputs/AE/{}/{}/training_checkpoints/checkpoint_full_model_ae'.format(cls,names[cls]))
+        ae.load_weights('outputs/AE/{}/{}/training_checkpoints/checkpoint_full_model_ae'.format(cls,model_name))
 
         x_hat  = infer(ae, test_images, args, 'AE')
         x_hat_train  = infer(ae, train_images, args, 'AE')
@@ -124,6 +128,29 @@ def main(cmd_args):
                 os.makedirs(path)
 
             plt.savefig('{}{}'.format(path,r), dpi=300)
+
+def get_dists(neighbours_dist, args):
+    """
+        Reconstruct distance vector to original dimensions when using patches
+
+        Parameters
+        ----------
+        neighbours_dist (np.array): Vector of per neighbour distances
+        args (Namespace): cmd_args 
+
+        Returns
+        -------
+        dists (np.array): reconstructed patches if necessary
+
+    """
+
+    dists = np.mean(neighbours_dist, axis = tuple(range(1,neighbours_dist.ndim)))
+    if args.patches:
+        dists = np.array([[d]*args.patch_x**2 for i,d in enumerate(dists)]).reshape(len(dists), args.patch_x, args.patch_y)
+        dists_recon = reconstruct(np.expand_dims(dists,axis=-1),args)
+        return dists_recon
+    else:
+        return dists 
 
 if __name__ == '__main__':
     main()

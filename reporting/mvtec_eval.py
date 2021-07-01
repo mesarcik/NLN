@@ -3,22 +3,21 @@ import numpy as np
 import os 
 import pandas as pd
 import pickle
-from sklearn.metrics import roc_curve, auc, f1_score, roc_auc_score
+from sklearn.metrics import roc_curve, auc, f1_score, roc_auc_score, jaccard_score 
 
 
 import sys
 sys.argv = [''] 
 
 from inference import infer, get_error
+from data import load_mvtec
 from utils.data import reconstruct,process,reconstruct_latent_patches
-from utils.metrics import *
+from utils.metrics import  nln, get_nln_errors
 from models_mvtec import Encoder as Encoder_MVTEC
 from models_mvtec import Autoencoder as Autoencoder_MVTEC 
 from models_mvtec import Discriminator_x as Discriminator_x_MVTEC
 from models import Discriminator_z 
 
-from data import *
-from inference import *
 
 
 class Namespace:
@@ -30,6 +29,8 @@ class Namespace:
         self.model_name= clss
     def set_input_shape(self,input_shape):
         self.input_shape= input_shape 
+    def set_mvtec_path(self,path):
+        self.mvtec_path = path
 
 PATCH = 128 
 LD = 128
@@ -68,7 +69,7 @@ def main(cmd_args):
     for model_type in models:
         results = {}
                 
-        for i,clss in enumerate(list(df.Class)):
+        for i,clss in enumerate(list(pd.unique(df.Class))):
             if (('grid' in clss) or
                 ('screw' in clss) or 
                 ('zipper' in clss)): 
@@ -82,6 +83,7 @@ def main(cmd_args):
 
             detections,segmentations, n_arr, ious = [],[], [], []
             args.set_class(clss)
+            args.set_mvtec_path(cmd_args.mvtec_path)
             (train_dataset, train_images, train_labels, test_images, test_labels,test_masks) = load_mvtec(args)
 
 
@@ -245,7 +247,51 @@ def find_best(models,seed):
     print(results)
                 
 
+def get_dists(neighbours_dist, args):
+    """
+        Reconstruct distance vector to original dimensions when using patches
 
+        Parameters
+        ----------
+        neighbours_dist (np.array): Vector of per neighbour distances
+        args (Namespace): cmd_args 
+
+        Returns
+        -------
+        dists (np.array): reconstructed patches if necessary
+
+    """
+
+    dists = np.mean(neighbours_dist, axis = tuple(range(1,neighbours_dist.ndim)))
+    if args.patches:
+        dists = np.array([[d]*args.patch_x**2 for i,d in enumerate(dists)]).reshape(len(dists), args.patch_x, args.patch_y)
+        dists_recon = reconstruct(np.expand_dims(dists,axis=-1),args)
+        return dists_recon
+    else:
+        return dists 
+
+def iou_score(error, test_masks):
+    """
+        Get jaccard index or IOU score
+
+        Parameters
+        ----------
+        error (np.array): input-output
+        test_masks (np.array): ground truth mask 
+
+        Returns
+        -------
+        max_iou (float32): maximum iou score for a number of thresholds
+
+    """
+    fpr,tpr, thr = roc_curve(test_masks.flatten()>0, error.flatten())
+
+    iou = []
+    for threshold in np.linspace(np.min(thr), np.max(thr),10):
+        thresholded = error >=threshold
+        iou.append(jaccard_score(test_masks.flatten()>0, thresholded.flatten()))
+
+    return max(iou) 
 
 if __name__ == '__main__':
     main()

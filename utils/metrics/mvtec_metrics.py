@@ -150,7 +150,7 @@ def accuracy_metrics(model,
                                                      args.neighbors[np.argmax(seg_iou_nlns)],
                                                      ))
 
-    plot_neighs(test_images, test_labels, test_masks, x_hat, x_hat_train[neighbours_idx], neighbours_dist, nln_error_recon, model_type, args)
+    plot_neighs(test_images, test_labels, test_masks, x_hat, x_hat_train[neighbours_idx], neighbours_dist, model_type, args)
     
     return seg_auc, seg_auc_nln, dists_auc, seg_dists_auc, seg_prc, seg_prc_nln, seg_iou, seg_iou_nln
 

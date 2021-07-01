@@ -5,10 +5,9 @@ from matplotlib import pyplot as plt
 
 N_PATCHES = 10
 
-def plot_neighs(test_images, test_labels, test_masks, x_hat, neighbours, neighbours_dist,error, model_type, args):
+def plot_neighs(test_images, test_labels, test_masks, x_hat, neighbours, neighbours_dist,model_type, args):
     rs = np.random.randint(0,len(test_labels),N_PATCHES) 
     if args.data == 'MVTEC': n = 4
-    else: n=3
     fig, ax = plt.subplots(N_PATCHES, args.neighbors[-1]+n, figsize=(10,10))
 
     if args.data == 'MVTEC':
@@ -16,12 +15,6 @@ def plot_neighs(test_images, test_labels, test_masks, x_hat, neighbours, neighbo
             test_images = test_images[...,0] 
             x_hat = x_hat[...,0] 
             neighbours= neighbours[...,0] 
-            error = error[...,0] 
-    else:
-        test_images = test_images[...,0] 
-        x_hat = x_hat[...,0] 
-        neighbours= neighbours[...,0] 
-        error = error[...,0] 
 
 
     for i,r in enumerate(rs):
@@ -49,10 +42,6 @@ def plot_neighs(test_images, test_labels, test_masks, x_hat, neighbours, neighbo
             ax[i,col].axis('off')
             col+=1
 
-        ax[i,col].imshow(error[r,...]>0.75, cmap='gist_heat')
-        ax[i,col].set_title('Residual', fontsize=6)
-        ax[i,col].axis('off')
-        col+=1
 
 
     plt.savefig('outputs/{}/{}/{}/neighbours.png'.format(model_type,
