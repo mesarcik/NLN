@@ -10,7 +10,7 @@ import sys
 sys.argv = [''] 
 
 from inference import infer, get_error
-from data import load_mvtec
+from data import *
 from utils.data import reconstruct,process,reconstruct_latent_patches
 from utils.metrics import  nln, get_nln_errors
 from models_mvtec import Encoder as Encoder_MVTEC
