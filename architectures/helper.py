@@ -3,7 +3,9 @@ from utils.plotting import save_training_curves
 from utils.metrics import get_classifcation, get_nln_metrics, save_metrics, accuracy_metrics
 
 def end_routine(train_images, test_images, test_labels, test_masks, model, model_type, args):
-    save_training_curves(model,args,test_images,test_labels,model_type)
+    if model_type != 'DKNN':
+        save_training_curves(model,args,test_images,test_labels,model_type)
+
     (auc_latent, neighbour,radius, dists_auc,sum_auc, mul_auc, x_hat, x_hat_train,
             neighbours_idx, neighbours_dist) = get_nln_metrics(model,   
                                                                train_images, 
@@ -17,7 +19,7 @@ def end_routine(train_images, test_images, test_labels, test_masks, model, model
                                             test_images,
                                             test_labels,
                                             args)
-    if args.data == 'MVTEC':
+    if False:
         seg_auc, seg_auc_nln, dists_auc, seg_dists_auc, seg_prc, seg_prc_nln, seg_iou, seg_iou_nln  = accuracy_metrics(model,
                                                                                                                         train_images,
                                                                                                                         test_images,

@@ -43,7 +43,8 @@ def get_classifcation(model_type,
         args (Namespace):  arguments from utils.cmd_input
 
     """
-    x_hat = infer(model[0], test_images, args, 'AE')
+    x_hat = infer(model[0], test_images, args, 'DKNN')
+    return -1
 
     if args.patches :
         error = get_error('AE', test_images, x_hat, mean=False)

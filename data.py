@@ -20,8 +20,13 @@ def load_mnist(args):
         args (Namespace) Command line parameters from utils.cmd_input
     """
     (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.mnist.load_data()
-    train_images = np.expand_dims(train_images,axis=-1)
-    test_images = np.expand_dims(test_images,axis=-1)
+    train_images = process(train_images)
+    test_images = process(test_images)
+    train_images = np.repeat(train_images[..., np.newaxis], 3, -1)
+    test_images = np.repeat(test_images[..., np.newaxis], 3, -1)
+
+    #train_images = resize(train_images, (32,32,3))
+    #test_images = resize(test_images, (32,32,3))
 
     if str(args.anomaly_class) is not None:
         if args.anomaly_type == 'MISO':
@@ -57,8 +62,6 @@ def load_mnist(args):
                                             (1,args.patch_x, args.patch_y, 1),
                                             (1,args.patch_stride_x, args.patch_stride_y, 1))
 
-    train_images = process(train_images)
-    test_images = process(test_images)
 
 
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
@@ -71,8 +74,15 @@ def load_fashion_mnist(args):
         args (Namespace) Command line parameters from utils.cmd_input
     """
     (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.fashion_mnist.load_data()
-    train_images = np.expand_dims(train_images,axis=-1)
-    test_images =  np.expand_dims(test_images,axis=-1)
+
+    train_images = process(train_images)
+    test_images = process(test_images)
+
+    train_images = np.repeat(train_images[..., np.newaxis], 3, -1)
+    test_images = np.repeat(test_images[..., np.newaxis], 3, -1)
+
+    #train_images = resize(train_images, (32,32,3))
+    #test_images = resize(test_images, (32,32,3))
 
     if str(args.anomaly_class) is not None:
         if args.anomaly_type == 'MISO':
@@ -108,8 +118,6 @@ def load_fashion_mnist(args):
 
         train_images, train_labels, test_images, test_labels = data
 
-    train_images = process(train_images)
-    test_images = process(test_images)
 
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
     return (train_dataset,train_images, train_labels, test_images, test_labels)
@@ -121,6 +129,8 @@ def load_cifar10(args):
         args (Namespace) Command line parameters from utils.cmd_input
     """
     (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.cifar10.load_data()
+    train_images = process(train_images)
+    test_images = process(test_images)
     train_labels,test_labels = train_labels[:,0],test_labels[:,0] #because cifar labels are weird
 
     if str(args.anomaly_class) is not None:
@@ -156,12 +166,12 @@ def load_cifar10(args):
                                     s_size = (1,args.patch_stride_x, args.patch_stride_y, 1))
 
         train_images, train_labels, test_images, test_labels = data
-        train_images = process(train_images, per_image=False)
-        test_images = process(test_images, per_image=False) 
+        #train_images = process(train_images, per_image=False)
+        #test_images = process(test_images, per_image=False) 
 
-    else: 
-        train_images = process(train_images)
-        test_images = process(test_images)
+    #else: 
+        #train_images = process(train_images)
+        #test_images = process(test_images)
 
     train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
     return (train_dataset,train_images, train_labels, test_images, test_labels)
@@ -173,6 +183,15 @@ def load_mvtec(args):
         args (Namespace) Command line parameters from utils.cmd_input
     """
     (train_images, train_labels), (test_images, test_labels, test_masks) = get_mvtec_images(str(args.anomaly_class))
+    if (('grid' in args.anomaly_class) or
+        ('screw' in args.anomaly_class) or 
+        ('zipper' in args.anomaly_class)): 
+
+        test_images = test_images[...,0]
+        train_images = train_images[...,0]
+
+        train_images = np.repeat(train_images[..., np.newaxis], 3, -1)
+        test_images = np.repeat(test_images[..., np.newaxis], 3, -1)
 
     
     if args.limit is not None:

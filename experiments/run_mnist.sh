@@ -6,7 +6,7 @@ epochs=50
 percentage=0.0
 seed=$(openssl rand -hex 3)
 d=$(date +'%m-%d-%Y-%I-%M_')
-ld=32
+ld=2048
 
 for i in $(seq 0 9)
 do

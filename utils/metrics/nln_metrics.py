@@ -171,18 +171,6 @@ def get_nln_errors(model,
 
         error = np.abs(z - z_hat)
 
-    elif model_type == 'RESNET_AE':
-
-        #TODO: Inefficeint way of doing things
-        test_images = resnet(test_images).numpy()
-        error = [] 
-        for n in range(neighbours.shape[1]):
-            error.append(test_images - resnet(neighbours[:,n,:]).numpy())
-        error = np.array(error)
-        error = np.swapaxes(error, 0, 1)
-            
-        error = np.mean(error, axis =1) #nanmean for frNN 
-
     return error
 
 
@@ -210,10 +198,10 @@ def get_nln_metrics(model,
 
     """
 
-    z_query = infer(model[0].encoder, test_images, args, 'encoder') 
-    z = infer(model[0].encoder, train_images, args, 'encoder')
-    x_hat_train = infer(model[0], train_images, args, 'AE')
-    x_hat = infer(model[0], test_images, args, 'AE')
+    z_query = infer(model[0], test_images, args, 'DKNN') 
+    z = infer(model[0], train_images, args, 'DKNN')
+    x_hat_train = None #infer(model[0], train_images, args, 'AE')
+    x_hat = None# infer(model[0], test_images, args, 'AE')
 
     d,max_auc,max_neighbours,max_radius,index_counter = {},0,0,0,0
     dists_auc, sum_auc, mul_auc = [], [], []
@@ -227,41 +215,48 @@ def get_nln_metrics(model,
                                                                                args.algorithm, 
                                                                                n_bour, 
                                                                                radius=None)
-            error = get_nln_errors(model,
-                                   model_type,
-                                   z_query,
-                                   z,
-                                   test_images,
-                                   x_hat_train,
-                                   neighbours_idx,
-                                   neighbour_mask,
-                                   args)
+            if model_type == 'DKNN':
+                error = neighbours_dist
+
+            else: 
+                error = get_nln_errors(model,
+                                       model_type,
+                                       z_query,
+                                       z,
+                                       test_images,
+                                       x_hat_train,
+                                       neighbours_idx,
+                                       neighbour_mask,
+                                       args)
             if args.patches:  
                 if error.ndim ==4:
                     error, test_labels_ = reconstruct(error, args, test_labels) 
                 else:
                     error, test_labels_ = reconstruct_latent_patches(error, args, test_labels) 
 
-            recon_error = get_error('AE', test_images, x_hat, mean=False)
-
-            if args.patches:
-                recon_error, test_labels_ = reconstruct(recon_error, args, test_labels) 
+            if model_type == 'DKNN':
+                recon_error = error
+                if not args.patches:
+                    test_labels_ = test_labels
             else:
-                recon_error, test_labels_ = recon_error, test_labels
+                recon_error = get_error('AE', test_images, x_hat, mean=False)
 
-            recon_error = process(np.nanmean(recon_error,axis=tuple(range(1,recon_error.ndim))), per_image=False)
+            #if args.patches:
+            #    recon_error, test_labels_ = reconstruct(recon_error, args, test_labels) 
+            #else:
+            #    recon_error, test_labels_ = recon_error, test_labels
 
-            error = process(np.nanmean(error,axis=tuple(range(1,error.ndim))), per_image =False)
-            dists = process(get_dists(neighbours_dist,args),per_image =False)
+            recon_error = np.sum(recon_error,axis=tuple(range(1,recon_error.ndim)))
+            error = recon_error
 
             if args.anomaly_type == 'MISO':
-                add = metrics.roc_auc_score(test_labels_==args.anomaly_class, error+dists+recon_error)
-                mul = metrics.roc_auc_score(test_labels_==args.anomaly_class, 0.3*error+0.7*dists )
-                dists = metrics.roc_auc_score(test_labels_==args.anomaly_class, dists)
+                add = metrics.roc_auc_score(test_labels_==args.anomaly_class, recon_error)
+                mul = metrics.roc_auc_score(test_labels_==args.anomaly_class, recon_error )
+                dists = metrics.roc_auc_score(test_labels_==args.anomaly_class, recon_error)
             else:
-                add = metrics.roc_auc_score(test_labels_!=args.anomaly_class, error+dists+recon_error)
-                mul = metrics.roc_auc_score(test_labels_!=args.anomaly_class, 0.3*error+0.7*dists)
-                dists = metrics.roc_auc_score(test_labels_!=args.anomaly_class, dists)
+                add = metrics.roc_auc_score(test_labels_!=args.anomaly_class, recon_error)
+                mul = metrics.roc_auc_score(test_labels_!=args.anomaly_class, recon_error)
+                dists = metrics.roc_auc_score(test_labels_!=args.anomaly_class, recon_error)
 
 
             dists_auc.append(dists)
@@ -354,7 +349,7 @@ def get_max_score(args):
 
 def get_dists(neighbours_dist, args):
 
-    dists = np.mean(neighbours_dist, axis = tuple(range(1,neighbours_dist.ndim)))
+    dists = np.sum(neighbours_dist, axis = tuple(range(1,neighbours_dist.ndim)))
 
     if args.patches:
         n_patches = sizes[str(args.anomaly_class)]//args.patch_x

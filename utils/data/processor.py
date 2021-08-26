@@ -12,18 +12,21 @@ def process(data,per_image=True):
         per_image (bool) determines if data is processed on a per image basis
 
     """
-    output = copy.deepcopy(data)
-    if per_image:
-        output = output.astype('float32')
-        for i,image in enumerate(data):
-            x,y,z = image.shape
-            output[i,...] = MinMaxScaler(feature_range=(0,1)
-                                          ).fit_transform(image.reshape([x*y,z])).reshape([x,y,z])
-    else:
-        mi, ma = np.min(data), np.max(data)
-        output = (data - mi)/(ma -mi)
-        output = output.astype('float32')
-    return output
+    #output = copy.deepcopy(data)
+    #if per_image:
+    #    output = output.astype('float32')
+    #    for i,image in enumerate(data):
+    #        x,y,z = image.shape
+    #        output[i,...] = MinMaxScaler(feature_range=(0,1)
+    #                                      ).fit_transform(image.reshape([x*y,z])).reshape([x,y,z])
+    #else:
+    #    mi, ma = np.min(data), np.max(data)
+    #    output = (data - mi)/(ma -mi)
+    #    output = output.astype('float32')
+    #return output
+    
+    data = data.astype('float32')
+    return tf.keras.applications.resnet50.preprocess_input(data)
 
 def resize(data, dim):
     """

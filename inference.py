@@ -44,11 +44,19 @@ def infer(model, data, args, arch):
             strt = fnnsh
             fnnsh +=BATCH_SIZE
     
-    else:
+    if arch == 'DAE':
         output = np.empty([len(data), args.latent_dim])
         strt, fnnsh = 0, BATCH_SIZE
         for batch in data_tensor:
             output[strt:fnnsh,...] = model(batch)[0].numpy() # for disc
+            strt = fnnsh
+            fnnsh +=BATCH_SIZE
+
+    if arch == 'DKNN':
+        output = np.empty([len(data), args.latent_dim])
+        strt, fnnsh = 0, BATCH_SIZE
+        for batch in data_tensor:
+            output[strt:fnnsh,...] = model(batch).numpy() 
             strt = fnnsh
             fnnsh +=BATCH_SIZE
 
