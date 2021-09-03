@@ -56,14 +56,13 @@ args = Namespace(
     # NLN PARAMS
     anomaly_class='bottle',
     radius= [10],
-    neighbors= [1,3, 5 ,10],
+    neighbors= [1, 2, 5, 10],
     algorithm = 'knn'
 )
 
 def main(cmd_args):
     df = pd.read_csv('outputs/results_{}_{}.csv'.format(cmd_args.data, cmd_args.seed))
 
-    model_names = list(pd.unique(df.Name)) 
     models = list(pd.unique(df.Model))  
 
     for model_type in models:
@@ -77,9 +76,10 @@ def main(cmd_args):
             else:
                 args.set_input_shape((PATCH,PATCH,3))
 
-            if ((model_type =='VAE') and  # VAE never trained properly on these classes 
-                    ((clss == 'leather') or (clss == 'tile') or (clss == 'wood') or (clss == 'zipper'))):
-                continue
+            model_name = df[(df.Model == model_type) &
+                            (df.Class == clss)].Name
+            if model_name.empty: continue
+            else: model_name = model_name.iloc[0]
 
             detections,segmentations, n_arr, ious = [],[], [], []
             args.set_class(clss)
@@ -87,7 +87,6 @@ def main(cmd_args):
             (train_dataset, train_images, train_labels, test_images, test_labels,test_masks) = load_mvtec(args)
 
 
-            model_name = model_names[i]
             args.set_name(model_name)
             ae = Autoencoder_MVTEC(args)
             p = 'outputs/{}/{}/{}/training_checkpoints/checkpoint_full_model_ae'.format(model_type, clss, model_name)
@@ -162,7 +161,11 @@ def main(cmd_args):
 
                 alpha = 0.5 
                 add_norm = (1-alpha)*nln_error_agg + alpha*dists_agg
-                AUC_detection = roc_auc_score(test_labels_recon == args.anomaly_class, add_norm.flatten())
+
+                AUC_detection = [roc_auc_score(test_labels_recon == args.anomaly_class, error_agg.flatten()),
+                                roc_auc_score(test_labels_recon == args.anomaly_class, nln_error_agg.flatten()),
+                                roc_auc_score(test_labels_recon == args.anomaly_class, dists_agg.flatten()),
+                                roc_auc_score(test_labels_recon == args.anomaly_class, add_norm.flatten())]
                 detections.append(AUC_detection)
 
                 ####### SEGMENTATION
@@ -170,11 +173,15 @@ def main(cmd_args):
                 
                 alpha = 0.5 
                 add_norm =  (1-alpha)*np.mean(nln_norm,axis=-1) + alpha*dists_norm[...,0]
-                AUC_segmentation = roc_auc_score(masks_recon.flatten()>0, add_norm.flatten())
+                AUC_segmentation = [roc_auc_score(masks_recon.flatten()>0, np.mean(recon_norm,axis=-1).flatten()),
+                                    roc_auc_score(masks_recon.flatten()>0, np.mean(nln_norm,axis=-1).flatten()),
+                                    roc_auc_score(masks_recon.flatten()>0, dists_norm[...,0].flatten()),
+                                    roc_auc_score(masks_recon.flatten()>0, add_norm.flatten())]
+
                 segmentations.append(AUC_segmentation)
 
                 ###### IOU
-                ious.append(iou_score(add_norm, masks_recon))
+                ious.append(-1)#iou_score(add_norm, masks_recon))
                 n_arr.append(nneigh)
                 results[clss]  = {'neighbour': n_arr,
                                    'detection':detections,
@@ -190,7 +197,7 @@ def aggregate(xs, method='avg'):
     y = np.empty(xs.shape[0])
     if method =='avg':
         for i,x in enumerate(xs):
-            y[i] = np.mean(x)
+            y[i] = np.nanmean(x)
     elif method == 'max':
         for i,x in enumerate(xs):
             y[i] = np.max(x)

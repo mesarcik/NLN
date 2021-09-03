@@ -4,12 +4,12 @@ from matplotlib import pyplot as plt
 import matplotlib.cm as cm
 from glob import glob
 
-def add_df_parameters(args):
+def add_df_parameters(data,seed):
     """
         Adds the missing parameters to the results.csv file 
 
     """
-    df = pd.read_csv('outputs/results_{}_{}.csv'.format(args.data, args.seed))
+    df = pd.read_csv('outputs/results_{}_{}.csv'.format(data, seed))
     df.drop(columns =list(df.columns[-7:]),inplace =True) 
     index = 0
     data = []

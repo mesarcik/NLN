@@ -77,7 +77,8 @@ def get_error(model_type,
             (model_type == 'AAE') or
             (model_type == 'AE_SSIM') or
             (model_type == 'DAE') or
-            (model_type == 'VAE')):
+            (model_type == 'VAE') or
+            (model_type == 'VQVAE')):
         error = x - x_hat 
 
     elif model_type == 'DAE_disc':

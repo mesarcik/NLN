@@ -2,7 +2,7 @@
 echo "Logging for run_mvtec.sh at time: $(date)." >> log.log
 
 limit=None
-epochs=100
+epochs=50
 percentage=0.0
 seed=$(openssl rand -hex 3)
 d=$(date +'%m-%d-%Y-%I-%M_')
@@ -19,8 +19,8 @@ for patch in 128
 							      -epochs $epochs \
 							      -latent_dim $ld\
 							      -data MVTEC\
-							      -mvtec_path datasets/MVTecAD/\
-							      -neighbors 1 2 3 5 \
+							      -mvtec_path /home/mmesarcik/data/MVTecAD/\
+							      -neighbors 2 5 \
 							      -algorithm knn\
 							      -rotate True \
 							      -crop True \

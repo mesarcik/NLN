@@ -107,7 +107,8 @@ def get_nln_errors(model,
         (model_type == 'AE_SSIM') or
         (model_type == 'AAE') or
         (model_type == 'DAE') or
-        (model_type == 'VAE')):
+        (model_type == 'VAE') or
+        (model_type == 'VQVAE')):
 
         error_nln = get_error(model_type, test_images_stacked,neighbours,mean=False) 
         error = np.mean(error_nln, axis =1) #nanmean for frNN 
