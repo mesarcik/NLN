@@ -75,6 +75,7 @@ def accuracy_metrics(model,
 
 
     seg_auc_nlns, seg_prc_nlns, dist_aucs, seg_aucs_dist, seg_iou_nlns = [], [], [], [],[]
+    combined_aucs, combined_ious = [], []
     print('NLN With Reconstruction')
     for n in args.neighbors:
         neighbours_dist, neighbours_idx, x_hat_train, neighbour_mask =  nln(z, 
@@ -120,20 +121,30 @@ def accuracy_metrics(model,
         seg_aucs_dist.append(dists_seg)
 
         print('\nDists AUC = {}\n'.format(dists))
+        combined_auc, combined_iou = get_combined(dists_recon, nln_error_recon, masks_recon,  args, alpha=0.75)
+        combined_aucs.append(combined_auc)
+        combined_ious.append(combined_iou)
+        print('\nCombined AUC = {}, IOU = {}\n'.format(combined_auc, combined_iou))
 
 
     seg_auc_nln = max(seg_auc_nlns)
     seg_prc_nln = max(seg_prc_nlns)
+    seg_iou_nln = max(seg_iou_nlns)
     dists_auc = max(dist_aucs)
     seg_dists_auc = max(seg_aucs_dist)
-    seg_iou_nln = max(seg_iou_nlns)
 
-    print('Max seg_auc neighbor= {}\nMax seg_prc neighbor={}\nMax dist_uac neighbor ={}\nMax seg_iou neigh={}'.format(
+    combined_auc = max(combined_aucs)
+    combined_iou = max(combined_ious)
+
+
+    print('Max seg_auc neighbor= {}\nMax seg_prc neighbor={}\nMax dist_uac neighbor ={}\nMax seg_iou neigh={}\nCombined AUC={}\nCombined IOU ={}'.format(
                                                                                     args.neighbors[np.argmax(seg_auc_nlns)],
                                                                                     args.neighbors[np.argmax(seg_prc_nlns)],
                                                                                     args.neighbors[np.argmax(dist_aucs)],
                                                                                     args.neighbors[np.argmax(seg_aucs_dist)],
                                                                                     args.neighbors[np.argmax(seg_iou_nlns)],
+                                                                                    args.neighbors[np.argmax(combined_aucs)],
+                                                                                    args.neighbors[np.argmax(combined_ious)],
                                                                                     ))
     with open("outputs/neighbour_results.csv", "a") as myfile:
         myfile.write('{},{},{},{},{},{},{}\n'.format(model_type, 
@@ -152,7 +163,40 @@ def accuracy_metrics(model,
 
     plot_neighs(test_images, test_labels, test_masks, x_hat, x_hat_train[neighbours_idx], neighbours_dist, model_type, args)
     
-    return seg_auc, seg_auc_nln, dists_auc, seg_dists_auc, seg_prc, seg_prc_nln, seg_iou, seg_iou_nln
+    return seg_auc, seg_auc_nln, dists_auc, seg_dists_auc, seg_prc, seg_prc_nln, seg_iou, seg_iou_nln, combined_auc, combined_iou
+
+def get_combined(dists, nln, test_masks, args, alpha=0.75):
+    """
+        Calculates AUROC result of segmentation
+
+        Parameters
+        ----------
+        error (np.array): input-output
+        test_masks (np.array): ground truth segmentation masks 
+        args (Namespace): cmd_input args
+
+        Returns
+        -------
+        auc (float32): AUROC for segmentation
+        prc (float32): AUPRC for segmentation
+        
+    """
+    nln = normalise(nln)
+    fpr_nln, tpr_nln, thr_nln  = roc_curve(test_masks.flatten()>0, np.mean(nln,axis=-1).flatten())
+    thr_nln = thr_nln[np.argmax(tpr_nln-fpr_nln)]
+
+    dists = normalise(dists)
+    fpr_dists, tpr_dists, thr_dists= roc_curve(test_masks.flatten()>0, np.max(dists,axis=-1).flatten())
+    thr_dists = thr_dists[np.argmax(tpr_dists-fpr_dists)]
+
+    error_thr = np.logical_and(np.mean(nln,axis=-1)>thr_nln, np.max(dists, axis=-1)>thr_dists)
+    iou = jaccard_score(test_masks.flatten()>0, error_thr.flatten())
+
+    error = alpha*dists + (1-alpha)*nln
+    fpr, tpr, thr= roc_curve(test_masks.flatten()>0, np.mean(error,axis=-1).flatten())
+    AUC = auc(fpr,tpr)
+
+    return AUC,iou
 
 def get_segmentation(error, test_masks, test_labels, args):
     """
@@ -297,11 +341,14 @@ def iou_score(error, test_masks):
 
     """
     fpr,tpr, thr = roc_curve(test_masks.flatten()>0, np.mean(error,axis=-1).flatten())
+    thr = thr[np.argmax(tpr-fpr)]
+    thresholded = np.mean(error,axis=-1) >=thr
+    return jaccard_score(test_masks.flatten()>0, thresholded.flatten())
 
-    iou = []
-    for threshold in np.linspace(np.min(thr), np.max(thr),10):
-        thresholded =np.mean(error,axis=-1) >=threshold
-        iou.append(jaccard_score(test_masks.flatten()>0, thresholded.flatten()))
+    #iou = []
+    #for threshold in np.linspace(np.min(thr), np.max(thr),10):
+    #    thresholded =np.mean(error,axis=-1) >=threshold
+    #    iou.append(jaccard_score(test_masks.flatten()>0, thresholded.flatten()))
 
-    return max(iou) 
+    #return max(iou) 
 

@@ -6,5 +6,4 @@ from .ae import main as train_ae
 from .aae import main as train_aae
 from .dae import main as train_dae
 from .vae import main as train_vae
-from .vqvae import main as train_vqvae
 from .ganomaly import main as train_ganomaly

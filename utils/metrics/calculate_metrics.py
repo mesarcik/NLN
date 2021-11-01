@@ -81,7 +81,10 @@ def save_metrics(model_type,
                  dists_auc=None,
                  seg_dists_auc=None,
                  sum_auc=None,
-                 mul_auc=None):
+                 mul_auc=None,
+                 combined_auc=None,
+                 combined_iou=None,
+                 ):
     
     """
         Either appends or saves a new .csv file with the top K 
@@ -126,7 +129,10 @@ def save_metrics(model_type,
                                      'Segmentation_NLN',
                                      'Segmentation_Distance_AUC',
                                      'Segmentation_IOU',
-                                     'Segmentation_IOU_NLN'])
+                                     'Segmentation_IOU_NLN',
+                                     'Combined_AUC',
+                                     'Combined_IOU',
+                                     ])
     else:  
         df = pd.read_csv('outputs/results_{}_{}.csv'.format(args.data,
                                                             args.seed))
@@ -151,7 +157,10 @@ def save_metrics(model_type,
                     'Segmentation_NLN':seg_auc_nln,
                     'Segmentation_Distance_AUC':seg_dists_auc,
                     'Segmentation_IOU':seg_iou,
-                    'Segmentation_IOU_NLN':seg_iou_nln},
+                    'Segmentation_IOU_NLN':seg_iou_nln,
+                    'Combined_AUC':combined_auc,
+                    'Combined_IOU':combined_iou,
+                    },
                      ignore_index=True)
 
     df.to_csv('outputs/results_{}_{}.csv'.format(args.data,

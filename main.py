@@ -34,12 +34,11 @@ def main():
                                                cmd_input.args.model_name))
     print(" __________________________________ \n")
 
-    #train_ae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
-    #train_dae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
-    #train_ganomaly(train_dataset,train_images,train_labels,test_images,test_labels,test_masks, cmd_input.args)
-    #train_vae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
-    #train_aae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
-    train_vqvae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
+    train_ae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
+    train_dae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
+    train_ganomaly(train_dataset,train_images,train_labels,test_images,test_labels,test_masks, cmd_input.args)
+    train_vae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
+    train_aae(train_dataset,train_images,train_labels,test_images,test_labels, test_masks, cmd_input.args)
 
 if __name__ == '__main__':
     main()
