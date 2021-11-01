@@ -19,7 +19,7 @@ NNEIGHBOURS= 5
 
 def l2_loss(x,x_hat):
 
-    return mse(x,x_hat)
+    return cross_entropy(x,x_hat)
 
 @tf.function
 def train_step(model, x):

@@ -20,7 +20,7 @@ discriminator_optimizer = tf.keras.optimizers.Adam(1e-5)
 generator_optimizer = tf.keras.optimizers.Adam(1e-5)
 
 def l2_loss(x,x_hat,loss_weight):
-    return loss_weight*mse(x,x_hat)
+    return loss_weight*cross_entropy(x,x_hat)
 
 def discriminator_loss(real_output, fake_output,loss_weight):
     real_loss =  cross_entropy(tf.ones_like(real_output), real_output)

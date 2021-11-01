@@ -14,7 +14,7 @@ from .helper import end_routine
 optimizer = tf.keras.optimizers.Adam()
 
 def l2_loss(x,x_hat):
-    return mse(tf.keras.backend.flatten(x),
+    return cross_entropy(tf.keras.backend.flatten(x),
                                   tf.keras.backend.flatten(x_hat))
 
 def KL_loss(logvar, mean):
