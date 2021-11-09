@@ -1,13 +1,13 @@
 import tensorflow as tf
 import numpy as np
-import os 
 import pandas as pd
 import pickle
 from sklearn.metrics import roc_curve, auc, f1_score, roc_auc_score, jaccard_score 
-
+from matplotlib import pyplot as plt
 
 import sys
 sys.argv = [''] 
+sys.path.insert(1,'/home/mmesarcik/NLN/')
 
 from inference import infer, get_error
 from data import *
@@ -38,7 +38,8 @@ LD = 128
 
 args = Namespace(
     data='MVTEC',
-    seed='12334',
+    mvtec_path = '/home/mmesarcik/data/MVTecAD/',
+    seed='11-01-2021-12-13_30198d',
     input_shape=(PATCH, PATCH, 3),
     rotate=True,
     crop=True,
@@ -54,7 +55,7 @@ args = Namespace(
     crop_y=PATCH,
     latent_dim=LD,
     # NLN PARAMS
-    anomaly_class='bottle',
+    anomaly_class='tba',
     radius= [10],
     neighbors= [1, 2, 5, 10],
     algorithm = 'knn'
@@ -62,11 +63,16 @@ args = Namespace(
 
 def main(cmd_args):
     df = pd.read_csv('outputs/results_{}_{}.csv'.format(cmd_args.data, cmd_args.seed))
+    df_out = pd.DataFrame(columns=['Model','Dataset','Name','Latent_Dim', 'Patch_Size', 
+                                  'Class', 'Type', 'Neighbour', 'Alpha', 
+                                  'Det_Recon_AUROC', 'Det_Add_AUROC',
+                                  'Seg_Recon_AUROC', 'Seg_Add_AUROC',
+                                  'Seg_Recon_IOU', 'Seg_Logical_And_IOU', 'Seg_Add_IOU'])
+    df_index = 0
 
     models = list(pd.unique(df.Model))  
 
     for model_type in models:
-        results = {}
                 
         for i,clss in enumerate(list(pd.unique(df.Class))):
             if (('grid' in clss) or
@@ -142,6 +148,7 @@ def main(cmd_args):
 
 
                 nln_error_seg_recon,test_labels_recon = reconstruct(nln_error_seg, args,test_labels)
+
                 if model_type == 'DAE_disc'  or model_type  == 'GANomaly': 
                     nln_error_recon,test_labels_recon = reconstruct_latent_patches(nln_error, args,test_labels)
                 else:
@@ -155,50 +162,47 @@ def main(cmd_args):
                 recon_norm = process(error_recon, per_image=False)
                 dists_norm = process(dists_recon, per_image=False)
 
-                error_agg = aggregate(recon_norm,method='max') 
-                nln_error_agg = aggregate(nln_norm, method='max')
-                dists_agg = aggregate(dists_norm, method='max')
+                error_agg     = np.nanmean(recon_norm,axis=tuple(range(1,recon_norm.ndim))) 
+                nln_error_agg = np.nanmean(nln_norm,axis=tuple(range(1,nln_norm.ndim))) 
+                dists_agg     = np.max(dists_norm,axis=tuple(range(1,dists_norm.ndim)))
 
-                alpha = 0.5 
-                add_norm = (1-alpha)*nln_error_agg + alpha*dists_agg
-
-                AUC_detection = [roc_auc_score(test_labels_recon == args.anomaly_class, error_agg.flatten()),
-                                roc_auc_score(test_labels_recon == args.anomaly_class, nln_error_agg.flatten()),
-                                roc_auc_score(test_labels_recon == args.anomaly_class, dists_agg.flatten()),
-                                roc_auc_score(test_labels_recon == args.anomaly_class, add_norm.flatten())]
-                detections.append(AUC_detection)
+                det_recon_auroc = roc_auc_score(test_labels_recon == args.anomaly_class, error_agg.flatten())
 
                 ####### SEGMENTATION
                 nln_norm = process(nln_error_seg_recon, per_image=False)
-                
-                alpha = 0.5 
-                add_norm =  (1-alpha)*np.mean(nln_norm,axis=-1) + alpha*dists_norm[...,0]
-                AUC_segmentation = [roc_auc_score(masks_recon.flatten()>0, np.mean(recon_norm,axis=-1).flatten()),
-                                    roc_auc_score(masks_recon.flatten()>0, np.mean(nln_norm,axis=-1).flatten()),
-                                    roc_auc_score(masks_recon.flatten()>0, dists_norm[...,0].flatten()),
-                                    roc_auc_score(masks_recon.flatten()>0, add_norm.flatten())]
+                seg_recon_auroc = roc_auc_score(masks_recon.flatten()>0, np.nanmean(recon_norm,axis=-1).flatten())
+                seg_recon_iou = iou_score(np.nanmean(recon_norm, axis=-1), masks_recon) 
+                seg_logical_and_iou = iou_score(np.nanmean(nln_norm, axis=-1), masks_recon, dists=np.max(dists_norm, axis=-1)) 
 
-                segmentations.append(AUC_segmentation)
 
-                ###### IOU
-                ious.append(-1)#iou_score(add_norm, masks_recon))
-                n_arr.append(nneigh)
-                results[clss]  = {'neighbour': n_arr,
-                                   'detection':detections,
-                                   'segmentation':segmentations,
-                                   'iou': ious}
-                print(results[clss])
-                filename = 'outputs/{}_{}_{}.pkl'.format(args.data, model_type,cmd_args.seed)
-                with open(filename,'wb') as f:
-                    pickle.dump(results,f)
-    find_best(models,cmd_args.seed)
+                for alpha in [0, 0.20, 0.4, 0.6, 0.8, 1.00]:
+                    
+                    error_det = (1-alpha)*nln_error_agg + alpha*dists_agg
+                    error_seg = (1-alpha)*np.nanmean(nln_norm, axis=-1) + alpha*np.nanmean(dists_norm, axis=-1)
 
-def aggregate(xs, method='avg'):
+                    det_add_auroc = roc_auc_score(test_labels_recon == args.anomaly_class, error_det.flatten())
+                    seg_add_auroc = roc_auc_score(masks_recon.flatten()>0, error_seg.flatten())
+
+                    seg_add_iou= iou_score(error_seg, masks_recon)
+
+                    df_out.loc[df_index] = [model_type,'MVTEC',model_name, LD, PATCH, 
+                                            clss, 'SIMO', nneigh, alpha, 
+                                            det_recon_auroc, det_add_auroc,
+                                            seg_recon_auroc, seg_add_auroc, 
+                                            seg_recon_iou, seg_logical_and_iou,  seg_add_iou]
+
+                    filename = 'outputs/results_{}_{}_{}.csv'.format(args.data, cmd_args.seed, 'joined')
+                    df_out.to_csv(filename, index=False)
+                    df_index+=1
+
+    #find_best(models,cmd_args.seed)
+
+def aggregate(xs, method='mean'):
     y = np.empty(xs.shape[0])
-    if method =='avg':
+    if method =='mean':
         for i,x in enumerate(xs):
             y[i] = np.nanmean(x)
-    elif method == 'max':
+    elif method == 'mean':
         for i,x in enumerate(xs):
             y[i] = np.max(x)
     elif method == 'med':
@@ -206,53 +210,105 @@ def aggregate(xs, method='avg'):
             y[i] = np.median(x)
     return y
 
-def find_best(models,seed):
-    results = {}
-    for model_type in models:
-        filename = 'outputs/{}_{}_{}.pkl'.format(args.data, model_type,seed)
-        d = np.load(filename, allow_pickle=True)
-        df = pd.DataFrame(columns = ['class', 'neighbour', 'detection', 'segmentation'])
-        for key in d.keys():
-            df_temp = pd.DataFrame(d[key], columns =  ['class', 'neighbour', 'detection', 'segmentation'])
-            df_temp['class'] = key
-            df = df.append(df_temp)
+def find_best():
+    filename = 'outputs/results_{}_{}_{}.csv'.format(args.data, args.seed, 'joined')
+    df = pd.read_csv(filename)
+    fig, axs = plt.subplots(1,3,figsize=(7,2))
 
-        df_group = df.groupby(['neighbour']).agg({'segmentation':'mean','detection':'mean'}).reset_index()
+    for model, marker  in zip(list(pd.unique(df.Model)), ['.','*','v']):
+        SEG_AUROC, SEG_LD, SEG_N, SEG_A, seg_aurocs = 0, 0 ,0, 0, [0,0]
+        DET_AUROC, DET_LD, DET_N, DET_A, det_aurocs = 0, 0 ,0, 0, [0,0]
+        IOU, IOU_LD, IOU_N, IOU_A, ious = 0, 0 ,0, 0, [0,0]
+        for ld in list(pd.unique(df.Latent_Dim)):
+            for neigh in list(pd.unique(df.Neighbour)):
+                seg_add_aurocs_temp = []
+                det_add_aurocs_temp = []
+                ious_temp= []
+                for alpha in list(pd.unique(df.Alpha)):
+                    df_temp = df[((df.Model == model) & (df.Latent_Dim == ld) & (df.Neighbour == neigh) & (df.Alpha == alpha))]
+                    seg_add_auroc_temp =  df_temp['Seg_Add_AUROC'].mean()
+                    det_add_auroc_temp =  df_temp['Det_Add_AUROC'].mean()
+                    iou_temp =  df_temp['Seg_Add_IOU'].mean()
 
-        results[model_type] = [df_group.segmentation.max(), df_group.detection.max()]
+                    seg_add_aurocs_temp.append(seg_add_auroc_temp)
+                    det_add_aurocs_temp.append(det_add_auroc_temp)
+                    ious_temp.append(iou_temp)
 
-        if model_type == 'GANomaly':
-            print('')
-            idx = df_group.segmentation.idxmax()
-            n = df_group.iloc[idx].neighbour
-            df_max = df[df.neighbour ==n].reset_index()
-            df_max = df_max.drop(['index'], axis=1)
-            df_max = df_max.round(2)
+                    if round(seg_add_auroc_temp,3) > SEG_AUROC:
+                        SEG_AUROC, SEG_LD, SEG_N, SEG_A  = round(seg_add_auroc_temp,3), ld, neigh, alpha
+                    if round(det_add_auroc_temp,3) > DET_AUROC:
+                        DET_AUROC, DET_LD, DET_N, DET_A  = round(det_add_auroc_temp,3), ld, neigh, alpha
+                    if round(iou_temp,3) > IOU:
+                        IOU, IOU_LD, IOU_N, IOU_A  = round(iou_temp,3), ld, neigh, alpha
 
-            print(df_max)
+                if np.mean(seg_add_aurocs_temp) > np.mean(seg_aurocs): seg_aurocs = seg_add_aurocs_temp
+                if np.mean(det_add_aurocs_temp) > np.mean(det_aurocs): det_aurocs = det_add_aurocs_temp
+                if np.mean(ious_temp) > np.mean(ious): ious = ious_temp 
 
-            textures = df_max[(df_max['class'] == 'carpet') | 
-                              (df_max['class'] == 'grid') | 
-                              (df_max['class'] == 'leather') | 
-                              (df_max['class'] == 'tile') | 
-                              (df_max['class'] == 'wood')]
+        if model == 'GANomaly': label = 'AE-con'
+        elif model == 'DAE_disc': label = 'AE-res'
+        else: label = model
+        axs[0].plot(list(pd.unique(df.Alpha)), seg_aurocs, marker=marker, markersize=4, label = ('{}'.format(label)))
+        axs[0].grid(True)
+        #axs[0].legend()
+        axs[0].set_title('Pixel-based AUROC vs Alpha',fontsize=10)
+        axs[0].set_xlabel(r'$\alpha$')
+        axs[0].set_ylabel('AUROC')
 
-            objects =  df_max[(df_max['class'] != 'carpet') & 
-                              (df_max['class'] != 'grid') & 
-                              (df_max['class'] != 'leather') & 
-                              (df_max['class'] != 'tile') & 
-                              (df_max['class'] != 'wood')]
-            print('Textures')
-            print(textures)
-            print(textures.mean())
-            print('Objects')
-            print(objects)
-            print(objects.mean())
+        axs[1].plot(list(pd.unique(df.Alpha)), det_aurocs, marker=marker, markersize=6, label = ('{}'.format(label)))
+        axs[1].grid(True)
+        #axs[1].legend()
+        axs[1].set_title('Image-based AUROC vs Alpha',fontsize=10)
+        axs[1].set_xlabel(r'$\alpha$')
+        axs[1].set_ylabel('AUROC')
 
-            print('')
+        axs[2].plot(list(pd.unique(df.Alpha)), ious,  marker=marker, markersize=6,label = ('{}'.format(label)))
+        axs[2].grid(True)
+#        axs[2].legend(f)
+        axs[2].set_title('IoU vs Alpha',fontsize=10)
+        axs[2].set_xlabel(r'$\alpha$')
+        axs[2].set_ylabel('IoU')
 
-    print(results)
-                
+
+
+        # For each model print the per class scores:
+        print('_______\n{}\n_______'.format(model))
+        print('_______\n{}\n_______'.format('Segmentation'))
+        print(df[(df.Model== model) & 
+                 (df.Latent_Dim == SEG_LD) &
+                 (df.Neighbour == SEG_N) &
+                 (df.Alpha == SEG_A)])
+        print(df[(df.Model== model) & 
+                 (df.Latent_Dim == SEG_LD) &
+                 (df.Neighbour == SEG_N) &
+                 (df.Alpha == SEG_A)]['Seg_Add_AUROC'].mean())
+
+        print('_______\n{}\n_______'.format('Detection'))
+        print(df[(df.Model== model) & 
+                 (df.Latent_Dim == DET_LD) &
+                 (df.Neighbour == DET_N) &
+                 (df.Alpha == DET_A)])
+        print(df[(df.Model== model) & 
+                 (df.Latent_Dim == DET_LD) &
+                 (df.Neighbour == DET_N) &
+                 (df.Alpha == DET_A)]['Det_Add_AUROC'].mean())
+        print('_______\n{}\n_______'.format('IOU'))
+        print(df[(df.Model== model) & 
+                 (df.Latent_Dim == IOU_LD) &
+                 (df.Neighbour == IOU_N) &
+                 (df.Alpha == IOU_A)])
+        print('_______')
+
+        print('')
+        print('_______')
+        print('_______')
+
+    handles, labels = axs[-1].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='lower center', ncol=3)
+    plt.tight_layout()
+    plt.savefig('/tmp/alpha_sensitivity',dpi=300)
+
+
 
 def get_dists(neighbours_dist, args):
     """
@@ -269,7 +325,7 @@ def get_dists(neighbours_dist, args):
 
     """
 
-    dists = np.mean(neighbours_dist, axis = tuple(range(1,neighbours_dist.ndim)))
+    dists = np.max(neighbours_dist, axis = tuple(range(1,neighbours_dist.ndim)))
     if args.patches:
         dists = np.array([[d]*args.patch_x**2 for i,d in enumerate(dists)]).reshape(len(dists), args.patch_x, args.patch_y)
         dists_recon = reconstruct(np.expand_dims(dists,axis=-1),args)
@@ -277,7 +333,7 @@ def get_dists(neighbours_dist, args):
     else:
         return dists 
 
-def iou_score(error, test_masks):
+def iou_score(error, test_masks, dists=None):
     """
         Get jaccard index or IOU score
 
@@ -292,13 +348,15 @@ def iou_score(error, test_masks):
 
     """
     fpr,tpr, thr = roc_curve(test_masks.flatten()>0, error.flatten())
-
-    iou = []
-    for threshold in np.linspace(np.min(thr), np.max(thr),10):
-        thresholded = error >=threshold
-        iou.append(jaccard_score(test_masks.flatten()>0, thresholded.flatten()))
-
-    return max(iou) 
+    thr = thr[np.argmax(tpr-fpr)]
+    thresholded = error >=thr
+    if dists is not None:
+        fpr_d,tpr_d, thr_d = roc_curve(test_masks.flatten()>0, dists.flatten())
+        thr_d = thr_d[np.argmax(tpr_d-fpr_d)]
+        thresholded_d = dists >=thr_d
+        return jaccard_score(test_masks.flatten()>0, np.logical_and(thresholded, thresholded_d).flatten())
+    else:
+        return jaccard_score(test_masks.flatten()>0, thresholded.flatten())
 
 if __name__ == '__main__':
-    main()
+    main(args)
