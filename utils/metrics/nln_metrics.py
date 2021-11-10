@@ -249,12 +249,14 @@ def get_nln_metrics(model,
             dists = process(get_dists(neighbours_dist,args),per_image =False)
 
             if args.anomaly_type == 'MISO':
+                alpha=0.6
                 add = metrics.roc_auc_score(test_labels_==args.anomaly_class, error+dists+recon_error)
-                mul = metrics.roc_auc_score(test_labels_==args.anomaly_class, 0.3*error+0.7*dists )
+                mul = metrics.roc_auc_score(test_labels_==args.anomaly_class, alpha*error+(1-alpha)*dists )
                 dists = metrics.roc_auc_score(test_labels_==args.anomaly_class, dists)
             else:
+                alpha=0.6
                 add = metrics.roc_auc_score(test_labels_!=args.anomaly_class, error+dists+recon_error)
-                mul = metrics.roc_auc_score(test_labels_!=args.anomaly_class, 0.3*error+0.7*dists)
+                mul = metrics.roc_auc_score(test_labels_!=args.anomaly_class, alpha*error+(1-alpha)*dists)
                 dists = metrics.roc_auc_score(test_labels_!=args.anomaly_class, dists)
 
             dists_auc.append(dists)
