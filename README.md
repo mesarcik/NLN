@@ -1,5 +1,5 @@
 # `NLN`: Nearest-Latent-Neighbours
-A repository containing the implementation of the paper entitled "Improving Novelty Detection using the Reconstructions of Nearest Neighbours"
+A repository containing the implementation of the paper entitled [Improving Novelty Detection using the Reconstructions of Nearest Neighbours](https://arxiv.org/abs/2111.06150) 
 
 ## Installation 
 Install conda environment by:
